@@ -11,14 +11,13 @@ import numpy as np
 from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture
 from function.mouse_controller import usb_control
+from util import milli_sleep
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 info_dir = os.path.join(ROOT, 'information.csv')
-
-
 
 
 def draw_box(img, box_list):
@@ -49,7 +48,7 @@ def draw_fps(img, fps_time, fps_list):
         fps_list.append(timer)
     cv2.putText(img, "lock:{:.1f}".format(int(1 / np.mean(fps_list))), (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                 (0, 0, 255), 2)
-    cv2.putText(img, "/n FPS:{:.1f}".format(1. / (time.time() - fps_time)), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1,
+    cv2.putText(img, "\n FPS:{:.1f}".format(1. / (time.time() - fps_time)), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1,
                 (27, 0, 221), 2)
     fps_time = time.time()
     return img
@@ -64,7 +63,7 @@ def lock_target(usb, kill):
             break
         fps_time = time.time()
         img = win32_capture(grab_info=grab_info)
-
+        milli_sleep(3)
         box_list = interface_img(img, model)
 
         usb.put(box_list)

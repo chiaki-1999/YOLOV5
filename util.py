@@ -1,8 +1,9 @@
-from win32con import SPI_GETMOUSE, SPI_SETMOUSE, SPI_GETMOUSESPEED, SPI_SETMOUSESPEED
-from sys import exit
-from platform import release
 from ctypes import windll
 from math import atan
+from platform import release
+from sys import exit
+
+import pywintypes
 import win32gui
 
 # 预加载为睡眠函数做准备
@@ -44,37 +45,30 @@ def FOV(target_move, base_len):
     return actual_move
 
 
-# 尝试pid
-class PID:
-    def __init__(self, P=0.2, I=0.0, D=0.0, exp_value=0.0):
-        self.kp = P
-        self.ki = I
-        self.kd = D
-        self.uPrevious = 0
-        self.uCurent = 0
-        self.setValue = exp_value
-        self.lastErr = 0
-        self.preLastErr = 0
-        self.errSum = 0
-        self.errSumLimit = 10
+# 确认窗口句柄与类名
+def get_window_info():
+    supported_games = 'Valve001 CrossFire LaunchUnrealUWindowsClient LaunchCombatUWindowsClient UnrealWindow UnityWndClass'
+    test_window = 'Notepad3 PX_WINDOW_CLASS Notepad Notepad++'
+    emulator_window = 'BS2CHINAUI Qt5154QWindowOwnDCIcon LSPlayerMainFrame TXGuiFoundation Qt5QWindowIcon LDPlayerMainFrame'
+    class_name, hwnd_var = None, None
+    testing_purpose = False
+    while not hwnd_var:  # 等待游戏窗口出现
+        milli_sleep(3000)
+        try:
+            hwnd_active = win32gui.GetForegroundWindow()
+            class_name = win32gui.GetClassName(hwnd_active)
+            if class_name not in (supported_games + test_window + emulator_window):
+                print('请使支持的游戏/程序窗口成为活动窗口...')
+                continue
+            else:
+                outer_hwnd = hwnd_var = win32gui.FindWindow(class_name, None)
+                if class_name in emulator_window:
+                    hwnd_var = win32gui.FindWindowEx(hwnd_var, None, None, None)
+                elif class_name in test_window:
+                    testing_purpose = True
+                print('已找到窗口')
+        except pywintypes.error:
+            print('您可能正使用沙盒,目前不支持沙盒使用')
+            exit(0)
 
-    # 位置式PID
-    def pid_position(self, curValue):
-        err = self.setValue - curValue
-        dErr = err - self.lastErr
-        self.preLastErr = self.lastErr
-        self.lastErr = err
-        self.errSum += err
-        outPID = self.kp * err + (self.ki * self.errSum) + (self.kd * dErr)
-        return outPID
-
-    # 增量式PID
-    def __call__(self, curValue):
-        self.uCurent = self.pid_position(curValue)  # 用位置式记录位置
-        outPID = self.uCurent - self.uPrevious
-        self.uPrevious = self.uCurent
-        return outPID
-
-    # 更新比例P值
-    def set_p(self, new_p):
-        self.kp = new_p
+    return class_name, hwnd_var, outer_hwnd, testing_purpose

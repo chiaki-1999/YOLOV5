@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from pynput import mouse
 
 from ShowUI import Ui_MainWindow
+from function.aim_lock_pi import Locker
 from function.grab_screen import get_screen_scale
 from function.mouse.mouse import Mouse
 
@@ -155,9 +156,10 @@ def show_ui():
     app.exec_()
 
 
+locker = Locker()
+
 def usb_control(usb, kill):
-    global mouse_left_click, mouse_right_click, mouses_offset_ratio, offset_pixel_center, \
-        offset_pixel_y, out_check, flag_lock_obj_left, flag_lock_obj_right
+    global mouse_left_click, mouse_right_click, mouses_offset_ratio, offset_pixel_center, offset_pixel_y, out_check, flag_lock_obj_left, flag_lock_obj_right
     ui_show = Thread(target=show_ui)
     ui_show.start()
 
@@ -175,7 +177,9 @@ def usb_control(usb, kill):
             or (mouse_right_click and flag_lock_obj_right)) \
                 and ((pos_min[0] ** 2 + pos_min[1] ** 2) >= offset_pixel_center ** 2) \
                 and pos_min[2]:
-            scale = get_screen_scale()
-            M_X = int(pos_min[0] * mouses_offset_ratio)
-            M_Y = int((pos_min[1] + offset_pixel_y * (4 / scale) * mouses_offset_ratio))
-            Mouse.mouse.move(M_X, M_Y)
+            M_X, M_Y = locker.lock(box_lists,pos_center)
+            print("M_X : ", M_X, "M_Y : ", M_Y)
+            M_X1 = int(pos_min[0] * mouses_offset_ratio)
+            M_Y1 = int((pos_min[1] + offset_pixel_y ) * mouses_offset_ratio)
+            print("M_X1 : ", M_X1, "M_Y1 : ", M_Y1)
+            Mouse.mouse.move(M_X1, M_Y1)

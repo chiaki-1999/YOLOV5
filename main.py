@@ -23,7 +23,7 @@ screen_W = get_screen_size()["width"]
 screen_H = get_screen_size()["height"]
 
 
-def get_grab_info(screen=0, multi=1.0, gs=416):
+def get_grab_info(screen=0, multi=1.0, gs=640):
     monitor_dev = win32api.EnumDisplayMonitors(None, None)
     x1 = monitor_dev[screen][2][0]
     y1 = monitor_dev[screen][2][1]
@@ -62,7 +62,7 @@ class MainWindows(QMainWindow):
             milli_sleep(300)
             self.ui.progressBar.setValue(i)
         self.close()
-        exit()
+        exit(1)
 
     def pth_push(self):
         choice = QFileDialog.getOpenFileName(MainWindows(), "选择权重文件")[0]

@@ -2,10 +2,10 @@ import csv
 import os
 import sys
 from pathlib import Path
-
+from math import sqrt, pow
 import numpy as np
 import torch
-
+import json
 from models.common import DetectMultiBackend
 from utils.augmentations import (letterbox)
 from utils.general import (Profile, cv2,
@@ -18,6 +18,19 @@ def load_model(img_size):
     model = DetectMultiBackend(weights, device=device, dnn=False, data=data, fp16=True)
     model.warmup(imgsz=(1, 3, *[img_size, img_size]))  # warmup
     return model
+
+
+def parse_array(arr):
+    new_arr = []
+    for i in range(len(arr)):
+        inner_arr = []
+        for j in range(len(arr[i])):
+            if '.' in arr[i][j]:
+                inner_arr.append(float(arr[i][j]))
+            else:
+                inner_arr.append(int(arr[i][j]))
+        new_arr.append(inner_arr)
+    return new_arr
 
 
 def interface_img(img, model):
@@ -51,9 +64,14 @@ def interface_img(img, model):
 
             for *xyxy, conf, cls in reversed(det):
                 xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
-                line = (names[int(cls)], *xywh, int(100 * conf))
+                line = (cls, *xywh, int(100 * conf))
+                line = ('%g ' * len(line)).rstrip() % line  # 去除尾部特殊字符 格式化数据
+                line = line.split(' ')  # line= tag,x,y,w,h
                 if 0.1 < (xywh[2] / xywh[3]) < 0.9 and xywh[3] < 0.8:
                     box_list.append(line)
+    if bool(box_list):
+        box_list = parse_array(box_list)
+
     return box_list
 
 

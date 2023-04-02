@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AnalysisUIOptions">
+    <option name="ANALYZE_INJECTED_CODE" value="false" />
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="310d64cf-ec61-4c4a-aa72-327868a40eab" name="Changes" comment="Changes">
-      <change afterPath="$PROJECT_DIR$/util.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/APEX_Beta_V5_3.0.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/APEX_Beta_V5_3.0.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/aim_lock_pi.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ShowUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/ShowUI.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/detect_object.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/detect_object.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/function/grab_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/grab_screen.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/information.csv" beforeDir="false" afterPath="$PROJECT_DIR$/function/information.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/function/mouse/mouse.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/mouse/mouse.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/mouse_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/mouse_controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/pre_dispose.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/pre_dispose.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/util.py" beforeDir="false" afterPath="$PROJECT_DIR$/util.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/weights/apex_pt.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/weights/apex_pt.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -47,17 +48,19 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;E:/CODE&quot;,
+    &quot;last_opened_file_path&quot;: &quot;E:/CODE/APEX_Beta_V5_3.0/YOLOV5/function&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;zielu.gittoolbox.app.config.v2&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\CODE\APEX_Beta_V5_3.0\YOLOV5\function" />
       <recent name="E:\CODE\APEX_Beta_V5_3.0\YOLOV5" />
       <recent name="E:\CODE\APEX_Beta_V5_3.0\weights" />
       <recent name="C:\Users\D\Documents\Tencent Files\2029958040\FileRecv\APEX_Beta_V5_3.0\APEX_Beta_V5_3.0\weights" />
@@ -112,7 +115,8 @@
       <workItem from="1680411911524" duration="7737000" />
       <workItem from="1680420408166" duration="6813000" />
       <workItem from="1680427458522" duration="1546000" />
-      <workItem from="1680429069576" duration="2114000" />
+      <workItem from="1680429069576" duration="15885000" />
+      <workItem from="1680445037510" duration="6542000" />
     </task>
     <task id="LOCAL-00001" summary="Changes">
       <created>1680420738964</created>
@@ -121,7 +125,14 @@
       <option name="project" value="LOCAL" />
       <updated>1680420738964</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Changes">
+      <created>1680431710552</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1680431710552</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -132,6 +143,6 @@
     <option name="LAST_COMMIT_MESSAGE" value="Changes" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/main_py$main.coverage" NAME="main 覆盖结果" MODIFIED="1680429239660" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/main_py$main.coverage" NAME="main 覆盖结果" MODIFIED="1680451585140" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
