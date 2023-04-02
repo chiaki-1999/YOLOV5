@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="310d64cf-ec61-4c4a-aa72-327868a40eab" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/.name" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/APEX_Beta_V5_3.0.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/csv-editor.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/git_toolbox_prj.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/SetUI.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ShowUI.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/export.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/detect_object.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/grab_screen.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/information.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/mouse/mouse.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/mouse/mouse.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/mouse_controller.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/pre_dispose.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/common.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/experimental.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/tf.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/yolo.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/activations.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/augmentations.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/autoanchor.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/autobatch.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/callbacks.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/dataloaders.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/downloads.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/general.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/loss.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/metrics.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/plots.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/segment/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/segment/augmentations.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/segment/dataloaders.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/segment/general.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/segment/loss.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/segment/metrics.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/segment/plots.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/torch_utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/utils/triton.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/300-128-total.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/PUBG绝地求生-v5s-2000张-300次训练-640x640训练(开镜状态下识别效果).pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/PUBG绝地求生-v5s-5000张-200次训练-640x640训练(开镜状态下识别效果).pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/apex_pt.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/apex_pt.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/cf.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/cf9000_yolov6.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/cfdw.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/csgo.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/csgo_2lab_v5.0_640_4500pic.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/yolov5n_cf7000.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/yolov5s.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/yolov5s.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/yolov5s_apex_200.pt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/weights/yolov5s_apex_7w.pt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="PATH_TO_GIT" value="C:\Program Files\Git\bin\git.exe" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitToolBoxStore">
+    <option name="projectConfigVersion" value="5" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/PyCharm2023.1/python_stubs/1699519/PyQt5/QtWidgets/QComboBox.py" root0="SKIP_INSPECTION" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2NM5tAKvOAQpWOkujoeeEz6b2ga" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "E:/CODE/APEX_Beta_V5_3.0/YOLOV5",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="E:\CODE\APEX_Beta_V5_3.0\weights" />
+      <recent name="C:\Users\D\Documents\Tencent Files\2029958040\FileRecv\APEX_Beta_V5_3.0\APEX_Beta_V5_3.0\weights" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="APEX_Beta_V5_3.0" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.main" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="310d64cf-ec61-4c4a-aa72-327868a40eab" name="Changes" comment="" />
+      <created>1679461324879</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1679461324879</updated>
+      <workItem from="1680341360384" duration="427000" />
+      <workItem from="1680341884295" duration="67000" />
+      <workItem from="1680343522151" duration="18000" />
+      <workItem from="1680343547203" duration="1605000" />
+      <workItem from="1680355752542" duration="35000" />
+      <workItem from="1680356341304" duration="6080000" />
+      <workItem from="1680364506727" duration="1864000" />
+      <workItem from="1680367478610" duration="2802000" />
+      <workItem from="1680407454571" duration="3604000" />
+      <workItem from="1680411911524" duration="7737000" />
+      <workItem from="1680420408166" duration="55000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/main_py$main.coverage" NAME="main 覆盖结果" MODIFIED="1680418408004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+</project>
