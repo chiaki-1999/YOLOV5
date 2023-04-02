@@ -176,7 +176,6 @@ def usb_control(usb, kill):
                 and ((pos_min[0] ** 2 + pos_min[1] ** 2) >= offset_pixel_center ** 2) \
                 and pos_min[2]:
             scale = get_screen_scale()
-            print("scale : " + str(scale))
             M_X = int(pos_min[0] * mouses_offset_ratio)
-            M_Y = int((pos_min[1] + offset_pixel_y * scale) * mouses_offset_ratio)
+            M_Y = int((pos_min[1] + offset_pixel_y * (4 / scale) * mouses_offset_ratio))
             Mouse.mouse.move(M_X, M_Y)

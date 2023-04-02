@@ -5,7 +5,6 @@ import sys
 import time
 from multiprocessing import set_start_method, Queue, Process
 from pathlib import Path
-
 import cv2
 import numpy as np
 
@@ -18,6 +17,8 @@ ROOT = FILE.parents[0]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 info_dir = os.path.join(ROOT, 'information.csv')
+
+
 
 
 def draw_box(img, box_list):
@@ -36,17 +37,21 @@ def draw_box(img, box_list):
         x2, y2 = int(x_center + w / 2), int(y_center + h / 2)
         cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
         cv2.putText(img, f'{_box[0]}_{_box[5]}%', (x1 + 5, y1 + 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-    return img
+        return img
 
 
-def draw_fps(img, fps_tag, fps_list):
-    timer = time.time() - fps_tag
+def draw_fps(img, fps_time, fps_list):
+    timer = time.time() - fps_time
     if len(fps_list) > 10:
         fps_list.pop(0)
         fps_list.append(timer)
     else:
         fps_list.append(timer)
-    cv2.putText(img, str(int(1 / np.mean(fps_list))), (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+    cv2.putText(img, "lock:{:.1f}".format(int(1 / np.mean(fps_list))), (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
+                (0, 0, 255), 2)
+    cv2.putText(img, "/n FPS:{:.1f}".format(1. / (time.time() - fps_time)), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                (27, 0, 221), 2)
+    fps_time = time.time()
     return img
 
 
@@ -57,7 +62,7 @@ def lock_target(usb, kill):
     while True:
         if kill.value == 1:
             break
-        fps_tag = time.time()
+        fps_time = time.time()
         img = win32_capture(grab_info=grab_info)
 
         box_list = interface_img(img, model)
@@ -66,7 +71,7 @@ def lock_target(usb, kill):
 
         if show_monitor == '开启':
             img = draw_box(img, box_list)
-            img = draw_fps(img, fps_tag, fps_list)
+            img = draw_fps(img, fps_time, fps_list)
 
             cv2.namedWindow('game_plug_in', cv2.WINDOW_KEEPRATIO)
             cv2.imshow('game_plug_in', img)

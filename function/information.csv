@@ -1,2 +1,2 @@
 screen_num,screen_multi,screen_info,screen_size,pth_dir,yaml_dir,show_monitor
-0,1.0,"(2560, 1440, 1040, 480, 480)",2560*1440,E:/CODE/APEX_Beta_V5_3.0/weights/cf.pt,YAML_DIR,关闭
+0,1.0,"(2560, 1440, 1072, 512, 416)",2560*1440,E:/CODE/APEX_Beta_V5_3.0/YOLOV5/weights/cf.pt,YAML_DIR,开启

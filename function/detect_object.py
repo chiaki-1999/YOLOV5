@@ -14,7 +14,7 @@ from utils.torch_utils import select_device
 
 
 def load_model(img_size):
-    device = select_device('')
+    device = select_device('cuda:0')
     model = DetectMultiBackend(weights, device=device, dnn=False, data=data, fp16=True)
     model.warmup(imgsz=(1, 3, *[img_size, img_size]))  # warmup
     return model
@@ -22,6 +22,8 @@ def load_model(img_size):
 
 def interface_img(img, model):
     stride, names = model.stride, model.names
+    h, w = img.shape[:2]
+    img = cv2.resize(img, (int(w * 0.8), int(h * 0.8)), interpolation=cv2.INTER_LINEAR)
 
     im = letterbox(img, 640, stride=stride, auto=True)[0]
     im = im.transpose((2, 0, 1))[::-1]
@@ -55,29 +57,15 @@ def interface_img(img, model):
     return box_list
 
 
-def draw_box(img, box_lists):
-    img_h, img_w, _ = img.shape
-    i = 0
-    for _box in box_lists:
-        i += 1
-        x1 = int(_box[1] * img_w - _box[3] * img_w / 2)
-        y1 = int(_box[2] * img_h - _box[4] * img_h / 2)
-        x2 = int(x1 + _box[3] * img_w)
-        y2 = int(y1 + _box[4] * img_h)
-        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-        cv2.putText(img, (str(i) + _box[0]), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
-    return img
-
-
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 info_dir = os.path.join(ROOT, 'information.csv')
 
-conf_thres = 0.3
+conf_thres = 0.5
 iou_thres = 0.4
-max_det = 1000
+max_det = 600
 
 with open(info_dir, 'r', encoding='utf-8', newline='') as fr:
     reader = csv.DictReader(fr)
