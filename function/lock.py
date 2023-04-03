@@ -1,20 +1,25 @@
-from math import *
+import math
+
+import pynput
 from simple_pid import PID
+
 from grab_screen import get_inspection_size
 
-pid_x = PID(1.2, 8, 0.03, setpoint=0, sample_time=0.001, )
-pid_y = PID(1.22, 3, 0.001, setpoint=0, sample_time=0.001, )
-pid_x.output_limits = (-4000 , 4000)
-pid_y.output_limits = (-3000 , 3000)
+pid_x = PID(0.4, 0.2, 0.03, setpoint=0, sample_time=0.001, )
+pid_y = PID(0.4, 0.2, 0.001, setpoint=0, sample_time=0.001, )
+pid_x.output_limits = (-4000, 4000)
+pid_y.output_limits = (-3000, 3000)
 TOP_X, TOP_Y, LEN_X, LEN_Y = get_inspection_size()
 MOUSE = pynput.mouse.Controller()
 DETECT_RANGE = 8000
 K = 4.07
 
+
 def lock(aims):
     mouse_pos_x, mouse_pos_y = MOUSE.position
     aims_copy = [(tag, x_c, y_c, width, height) for tag, x_c, y_c, width, height in aims
-                 if (LEN_X * float(x_c) + TOP_X - mouse_pos_x) ** 2 + (LEN_Y * float(y_c) + TOP_Y - mouse_pos_y) ** 2 < DETECT_RANGE]
+                 if (LEN_X * float(x_c) + TOP_X - mouse_pos_x) ** 2 + (
+                         LEN_Y * float(y_c) + TOP_Y - mouse_pos_y) ** 2 < DETECT_RANGE]
     if not aims_copy:
         return None
     dist_list = []

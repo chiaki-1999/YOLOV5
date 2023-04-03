@@ -2,10 +2,10 @@ import csv
 import os
 import sys
 from pathlib import Path
-from math import sqrt, pow
+
 import numpy as np
 import torch
-import json
+
 from models.common import DetectMultiBackend
 from utils.augmentations import (letterbox)
 from utils.general import (Profile, cv2,

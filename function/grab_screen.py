@@ -11,20 +11,23 @@ def win32_capture(grab_info):
     hwnd = 0
     hwndDC = win32gui.GetWindowDC(hwnd)
     mfcDC = win32ui.CreateDCFromHandle(hwndDC)
+    saveDC = mfcDC.CreateCompatibleDC()
+    saveBitMap = win32ui.CreateBitmap()
 
     gx, gy, gs = grab_info
     gw = gs
     gh = gs
-
-    img = np.zeros((gh, gw, 3), dtype=np.uint8)
-
-    for y in range(gh):
-        for x in range(gw):
-            color = win32gui.GetPixel(mfcDC.GetSafeHdc(), gx + x, gy + y)
-            img[y, x] = (color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF)
-
+    saveBitMap.CreateCompatibleBitmap(mfcDC, gw, gh)
+    saveDC.SelectObject(saveBitMap)
+    saveDC.BitBlt((0, 0), (gw, gh), mfcDC, (gx, gy), win32con.SRCCOPY)
+    signed_ints_array = saveBitMap.GetBitmapBits(True)
+    img = np.frombuffer(signed_ints_array, dtype='uint8')
+    img.shape = (gh, gw, 4)
+    win32gui.DeleteObject(saveBitMap.GetHandle())
     mfcDC.DeleteDC()
+    saveDC.DeleteDC()
     return cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+
 
 ###获取真实的分辨率
 def get_real_screen_resolution():
@@ -42,9 +45,9 @@ def get_screen_scale():
     return proportion
 
 
-
 # Memoize the screen size
 _screen_size = None
+
 
 def get_screen_size():
     global _screen_size
@@ -62,6 +65,6 @@ def get_inspection_size():
         width, height = get_screen_size()
         top_x, top_y = 0, 0
         len_x, len_y = int(width * 0.4), int(height * 0.4)
-        top_x, top_y = int(top_x + x // 2 * (1 - 0.4)), int(top_y + y // 2 * (1 - 0.4))
+        top_x, top_y = int(top_x + width // 2 * (1 - 0.4)), int(top_y + height // 2 * (1 - 0.4))
         _inspection_size = top_x, top_y, len_x, len_y
     return _inspection_size

@@ -1,16 +1,14 @@
-import csv
-import os
 import sys
-from pathlib import Path
 from threading import Thread
-from util import milli_sleep
+
 import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from pynput import mouse
-from lock import lock
+
 from ShowUI import Ui_MainWindow
-from function.grab_screen import get_screen_scale
 from function.mouse.mouse import Mouse
+from lock import lock
+from util import milli_sleep
 
 mouse_left_click = False
 mouse_right_click = False
@@ -20,6 +18,7 @@ flag_lock_obj_right = False
 offset_pixel_center = 0
 offset_pixel_y = 0
 out_check = 0
+
 
 class ShowWindows(QMainWindow):
 
@@ -91,22 +90,6 @@ class ShowWindows(QMainWindow):
         winsound.Beep(600, 200)
         out_check = 1
         self.close()
-        sys.exit(0)
-
-
-def track_target_ratio(box_lists):
-    pos_min = (0, 0)
-    if len(box_lists) != 0:
-        dis_min = max_pos
-        for _box in box_lists:
-            x_target = int(_box[1] * grab_width + grab_x)
-            y_target = int(_box[2] * grab_height + grab_y)
-            if (x_target - pos_center[0]) ** 2 + (y_target - pos_center[1]) < dis_min ** 2:
-                dis_min = (x_target - pos_center[0]) ** 2 + (y_target - pos_center[1])
-                pos_min = (x_target - pos_center[0], y_target - pos_center[1])
-        return pos_min[0], pos_min[1], 1
-    else:
-        return 0, 0, 0
 
 
 def show_ui():
@@ -120,8 +103,11 @@ def on_click(x, y, button, pressed):
     global mouse_left_click, mouse_right_click
     if button == mouse.Button.left:
         mouse_left_click = pressed
+        print("左键按下 ： ", pressed)
     elif button == mouse.Button.right:
         mouse_right_click = pressed
+        print("右键按下 ： ", pressed)
+
 
 def usb_control(usb, kill):
     global mouse_left_click, mouse_right_click, mouses_offset_ratio, offset_pixel_center, offset_pixel_y, out_check, flag_lock_obj_left, flag_lock_obj_right
@@ -144,5 +130,4 @@ def usb_control(usb, kill):
                 x, y = coordinate
                 M_X = int(x * mouses_offset_ratio)
                 M_Y = int((y + offset_pixel_y) * mouses_offset_ratio)
-                print(" M_X1 : ", M_X, " M_Y1 : ", M_Y)
-                Mouse.mouse.move(M_X1, M_Y1)
+                Mouse.mouse.move(M_X, M_Y)

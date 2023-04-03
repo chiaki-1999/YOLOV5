@@ -21,6 +21,7 @@ info_dir = os.path.join(ROOT, 'function', 'information.csv')
 
 screen_W, screen_H = get_screen_size()
 
+
 def get_grab_info(screen=0, multi=1.0, gs=640):
     monitor_dev = win32api.EnumDisplayMonitors(None, None)
     x1 = monitor_dev[screen][2][0]
