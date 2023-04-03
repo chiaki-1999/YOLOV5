@@ -61,10 +61,9 @@ def interface_img(img, model):
         gn = torch.tensor(img.shape)[[1, 0, 1, 0]]
         if len(det):
             det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], img.shape).round()
-
             for *xyxy, conf, cls in reversed(det):
                 xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
-                line = (cls, *xywh, int(100 * conf))
+                line = (cls, *xywh)
                 line = ('%g ' * len(line)).rstrip() % line  # 去除尾部特殊字符 格式化数据
                 line = line.split(' ')  # line= tag,x,y,w,h
                 if 0.1 < (xywh[2] / xywh[3]) < 0.9 and xywh[3] < 0.8:
@@ -83,7 +82,7 @@ info_dir = os.path.join(ROOT, 'information.csv')
 
 conf_thres = 0.5
 iou_thres = 0.4
-max_det = 600
+max_det = 800
 
 with open(info_dir, 'r', encoding='utf-8', newline='') as fr:
     reader = csv.DictReader(fr)

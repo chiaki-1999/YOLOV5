@@ -107,7 +107,7 @@ class MainWindows(QMainWindow):
 if __name__ == '__main__':
     if not is_admin():  # 检查管理员权限
         print("=======请管理员身份运行此程序=======")
-        exit()
+        exit(1)
     set_dpi()  # 设置高DPI不受影响
     # 提升进程优先级
     if platform == 'win32':

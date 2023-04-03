@@ -52,3 +52,13 @@ def get_screen_scale():
     screen_size = get_screen_size()
     proportion = round(real_resolution['width'] / screen_size['width'], 2)
     return proportion
+
+
+
+width = get_screen_size()["width"]
+height = get_screen_size()["height"]
+def get_inspection_size():
+    top_x, top_y = 0, 0
+    len_x, len_y = int(width * 0.4), int(height * 0.4)
+    top_x, top_y = int(top_x + x // 2 * (1. - 0.4)), int(top_y + y // 2 * (1. - 0.4))
+    return {'left': top_x, 'top': top_y, 'width': len_x, 'height': len_y}

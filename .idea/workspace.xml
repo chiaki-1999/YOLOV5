@@ -8,16 +8,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="310d64cf-ec61-4c4a-aa72-327868a40eab" name="Changes" comment="Changes">
-      <change afterPath="$PROJECT_DIR$/function/aim_lock_pi.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/function/lock.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/APEX_Beta_V5_3.0.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/APEX_Beta_V5_3.0.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ShowUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/ShowUI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/function/aim_lock_pi.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/function/detect_object.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/detect_object.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/function/information.csv" beforeDir="false" afterPath="$PROJECT_DIR$/function/information.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/function/grab_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/grab_screen.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/mouse_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/mouse_controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/pre_dispose.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/pre_dispose.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/util.py" beforeDir="false" afterPath="$PROJECT_DIR$/util.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/weights/apex_pt.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/weights/apex_pt.yaml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,14 +25,10 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="Git.Settings">
-    <option name="PATH_TO_GIT" value="C:\Program Files\Git\bin\git.exe" />
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitToolBoxStore">
     <option name="projectConfigVersion" value="5" />
-  </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$USER_HOME$/AppData/Local/JetBrains/PyCharm2023.1/python_stubs/1699519/PyQt5/QtWidgets/QComboBox.py" root0="SKIP_INSPECTION" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -43,23 +39,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;E:/CODE/APEX_Beta_V5_3.0/YOLOV5/function&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;zielu.gittoolbox.app.config.v2&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/zcy/PycharmProjects/new/YOLOV5/function",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "run.code.analysis.last.selected.profile": "aDefault",
+    "settings.editor.selected.configurable": "vcs.Git",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/function" />
       <recent name="E:\CODE\APEX_Beta_V5_3.0\YOLOV5\function" />
       <recent name="E:\CODE\APEX_Beta_V5_3.0\YOLOV5" />
       <recent name="E:\CODE\APEX_Beta_V5_3.0\weights" />
@@ -117,6 +115,10 @@
       <workItem from="1680427458522" duration="1546000" />
       <workItem from="1680429069576" duration="15885000" />
       <workItem from="1680445037510" duration="6542000" />
+      <workItem from="1680486541323" duration="1029000" />
+      <workItem from="1680488027601" duration="1510000" />
+      <workItem from="1680491182162" duration="39000" />
+      <workItem from="1680491228792" duration="10367000" />
     </task>
     <task id="LOCAL-00001" summary="Changes">
       <created>1680420738964</created>
@@ -137,6 +139,17 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Changes" />
