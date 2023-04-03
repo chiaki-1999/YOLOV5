@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 from threading import Thread
-
+from util import milli_sleep
 import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from pynput import mouse
@@ -132,6 +132,7 @@ def usb_control(usb, kill):
     listener_mouse.start()
 
     while True:
+        milli_sleep(2)
         kill.value = out_check
         if usb.empty() is True:
             continue
@@ -140,6 +141,8 @@ def usb_control(usb, kill):
                 or (mouse_right_click and flag_lock_obj_right)):
             coordinate = lock(box_lists)
             if bool(coordinate):
-                M_X1, M_Y1 = coordinate
-                print(" M_X1 : ", M_X1, " M_Y1 : ", M_Y1)
+                x, y = coordinate
+                M_X = int(x * mouses_offset_ratio)
+                M_Y = int((y + offset_pixel_y) * mouses_offset_ratio)
+                print(" M_X1 : ", M_X, " M_Y1 : ", M_Y)
                 Mouse.mouse.move(M_X1, M_Y1)

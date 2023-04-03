@@ -59,6 +59,9 @@ def lock_target(usb, kill):
             img = draw_fps(img, fps_time, fps_list)
             cv2.namedWindow('game_plug_in', cv2.WINDOW_KEEPRATIO)
             cv2.imshow('game_plug_in', img)
+            hwnd = win32gui.FindWindow(None, 'game_plug_in')
+            CVRECT = cv2.getWindowImageRect('game_plug_in')
+            win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
             cv2.waitKey(1)
     box_list.clear()
 
