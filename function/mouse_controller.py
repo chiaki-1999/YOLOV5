@@ -122,12 +122,7 @@ class ShowWindows(QMainWindow):
         self.close()
 
 
-def on_click(x, y, button, pressed):
-    global mouse_left_click, mouse_right_click
-    if button == mouse.Button.left:
-        mouse_left_click = pressed
-    elif button == mouse.Button.right:
-        mouse_right_click = pressed
+
 
 def track_target_ratio(box_lists):
     pos_min = (0, 0)
@@ -150,6 +145,13 @@ def show_ui():
     windows.show()
     app.exec_()
 
+
+def on_click(x, y, button, pressed):
+    global mouse_left_click, mouse_right_click
+    if button == mouse.Button.left:
+        mouse_left_click = pressed
+    elif button == mouse.Button.right:
+        mouse_right_click = pressed
 
 def usb_control(usb, kill):
     global mouse_left_click, mouse_right_click, mouses_offset_ratio, offset_pixel_center, offset_pixel_y, out_check, flag_lock_obj_left, flag_lock_obj_right

@@ -11,38 +11,26 @@ def win32_capture(grab_info):
     hwnd = 0
     hwndDC = win32gui.GetWindowDC(hwnd)
     mfcDC = win32ui.CreateDCFromHandle(hwndDC)
-    saveDC = mfcDC.CreateCompatibleDC()
-    saveBitMap = win32ui.CreateBitmap()
 
     gx, gy, gs = grab_info
     gw = gs
     gh = gs
 
-    saveBitMap.CreateCompatibleBitmap(mfcDC, gw, gh)
-    saveDC.SelectObject(saveBitMap)
+    img = np.zeros((gh, gw, 3), dtype=np.uint8)
 
-    saveDC.BitBlt((0, 0), (gw, gh), mfcDC, (gx, gy), win32con.SRCCOPY)
-    signed_ints_array = saveBitMap.GetBitmapBits(True)
-    img = np.frombuffer(signed_ints_array, dtype='uint8')
-    img.shape = (gh, gw, 4)
-    win32gui.DeleteObject(saveBitMap.GetHandle())
+    for y in range(gh):
+        for x in range(gw):
+            color = win32gui.GetPixel(mfcDC.GetSafeHdc(), gx + x, gy + y)
+            img[y, x] = (color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF)
+
     mfcDC.DeleteDC()
-    saveDC.DeleteDC()
     return cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
-
 
 ###获取真实的分辨率
 def get_real_screen_resolution():
     h_DC = win32gui.GetDC(0)
     width = win32print.GetDeviceCaps(h_DC, win32con.DESKTOPHORZRES)
     height = win32print.GetDeviceCaps(h_DC, win32con.DESKTOPVERTRES)
-    return {"width": width, "height": height}
-
-
-###获取缩放后的分辨率
-def get_screen_size():
-    width = win32api.GetSystemMetrics(0)
-    height = win32api.GetSystemMetrics(1)
     return {"width": width, "height": height}
 
 
@@ -55,10 +43,25 @@ def get_screen_scale():
 
 
 
-width = get_screen_size()["width"]
-height = get_screen_size()["height"]
+# Memoize the screen size
+_screen_size = None
+
+def get_screen_size():
+    global _screen_size
+    if _screen_size is None:
+        _screen_size = (win32api.GetSystemMetrics(0), win32api.GetSystemMetrics(1))
+    return _screen_size
+
+
+_inspection_size = None
+
+
 def get_inspection_size():
-    top_x, top_y = 0, 0
-    len_x, len_y = int(width * 0.4), int(height * 0.4)
-    top_x, top_y = int(top_x + x // 2 * (1. - 0.4)), int(top_y + y // 2 * (1. - 0.4))
-    return {'left': top_x, 'top': top_y, 'width': len_x, 'height': len_y}
+    global _inspection_size
+    if _inspection_size is None:
+        width, height = get_screen_size()
+        top_x, top_y = 0, 0
+        len_x, len_y = int(width * 0.4), int(height * 0.4)
+        top_x, top_y = int(top_x + x // 2 * (1 - 0.4)), int(top_y + y // 2 * (1 - 0.4))
+        _inspection_size = top_x, top_y, len_x, len_y
+    return _inspection_size

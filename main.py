@@ -19,9 +19,7 @@ if str(ROOT) not in path:
     path.append(str(ROOT))
 info_dir = os.path.join(ROOT, 'function', 'information.csv')
 
-screen_W = get_screen_size()["width"]
-screen_H = get_screen_size()["height"]
-
+screen_W, screen_H = get_screen_size()
 
 def get_grab_info(screen=0, multi=1.0, gs=640):
     monitor_dev = win32api.EnumDisplayMonitors(None, None)

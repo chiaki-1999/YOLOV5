@@ -7,10 +7,7 @@ pid_y = PID(1.22, 3, 0.001, setpoint=0, sample_time=0.001, )
 pid_x.output_limits = (-4000 , 4000)
 pid_y.output_limits = (-3000 , 3000)
 
-top_x = get_inspection_size()[""]
-top_y = get_inspection_size()[""]
-len_x = get_inspection_size()[""]
-len_y = get_inspection_size()[""]
+top_x, top_y, len_x, len_y = get_inspection_size()
 mouse = pynput.mouse.Controller()
 DETECT_ARRANGE = 8000
 k = 4.07
