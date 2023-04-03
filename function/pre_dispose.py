@@ -13,11 +13,7 @@ from function.grab_screen import win32_capture
 from function.mouse_controller import usb_control
 from util import milli_sleep
 
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[0]
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-info_dir = os.path.join(ROOT, 'information.csv')
+
 
 
 def draw_box(img, box_list, gs, gy):
@@ -75,6 +71,14 @@ def main():
     usb = Process(target=usb_control, args=(q, kill))
     lock.start()
     usb.start()
+
+
+
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[0]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+info_dir = os.path.join(ROOT, 'information.csv')
 
 
 with open(info_dir, 'r', encoding='utf-8', newline='') as fr:

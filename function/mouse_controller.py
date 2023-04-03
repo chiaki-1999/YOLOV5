@@ -12,7 +12,6 @@ from ShowUI import Ui_MainWindow
 from function.grab_screen import get_screen_scale
 from function.mouse.mouse import Mouse
 
-
 mouse_left_click = False
 mouse_right_click = False
 mouses_offset_ratio = 0.0
@@ -20,35 +19,7 @@ flag_lock_obj_left = False
 flag_lock_obj_right = False
 offset_pixel_center = 0
 offset_pixel_y = 0
-time_sleep = 0.05
-track_target = 0
-grab_size = 640
-
-mouses = mouse.Controller()
-
-FILE = Path(__file__).resolve()
-ROOT = FILE.parents[0]
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-info_dir = os.path.join(ROOT, 'information.csv')
-with open(info_dir, 'r', encoding='utf-8', newline='') as fr:
-    reader = csv.DictReader(fr)
-    for r in reader:
-        pass
-    screen_size = r['screen_size']
-fr.close()
-
-screen_size = screen_size.split('*')
-screen_size = (int(screen_size[0]), int(screen_size[1]))
-screen_width, screen_height = screen_size
-grab = (int((screen_size[0] - grab_size) / 2), int((screen_size[1] - grab_size) / 2), grab_size, grab_size)
-grab_x, grab_y, grab_width, grab_height = grab
-pos_center = (int(screen_width / 2), int(screen_height / 2))
-max_pos = int(pow((pow(pos_center[0], 2) + pow(pos_center[1], 2)), 0.5))
-mouse_x, mouse_y = pos_center
-
 out_check = 0
-
 
 class ShowWindows(QMainWindow):
 
@@ -120,8 +91,7 @@ class ShowWindows(QMainWindow):
         winsound.Beep(600, 200)
         out_check = 1
         self.close()
-
-
+        sys.exit(0)
 
 
 def track_target_ratio(box_lists):
@@ -167,7 +137,9 @@ def usb_control(usb, kill):
             continue
         box_lists = usb.get()
         if ((mouse_left_click and flag_lock_obj_left)
-            or (mouse_right_click and flag_lock_obj_right)):
-            M_X1, M_Y1 = lock(box_lists)
-            print(" M_X1 : ", M_X1 , " M_Y1 : " ,M_Y1)
-            Mouse.mouse.move(M_X1, M_Y1)
+                or (mouse_right_click and flag_lock_obj_right)):
+            coordinate = lock(box_lists)
+            if bool(coordinate):
+                M_X1, M_Y1 = coordinate
+                print(" M_X1 : ", M_X1, " M_Y1 : ", M_Y1)
+                Mouse.mouse.move(M_X1, M_Y1)

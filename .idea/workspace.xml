@@ -7,17 +7,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="310d64cf-ec61-4c4a-aa72-327868a40eab" name="Changes" comment="Changes">
-      <change afterPath="$PROJECT_DIR$/function/lock.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/APEX_Beta_V5_3.0.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/APEX_Beta_V5_3.0.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="310d64cf-ec61-4c4a-aa72-327868a40eab" name="Changes" comment="优化代码">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/function/aim_lock_pi.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/function/detect_object.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/detect_object.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/function/grab_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/grab_screen.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/function/lock.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/lock.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/mouse_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/mouse_controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/function/pre_dispose.py" beforeDir="false" afterPath="$PROJECT_DIR$/function/pre_dispose.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,6 +20,7 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="WARN_ABOUT_CRLF" value="false" />
   </component>
   <component name="GitToolBoxStore">
     <option name="projectConfigVersion" value="5" />
@@ -118,7 +113,7 @@
       <workItem from="1680486541323" duration="1029000" />
       <workItem from="1680488027601" duration="1510000" />
       <workItem from="1680491182162" duration="39000" />
-      <workItem from="1680491228792" duration="10367000" />
+      <workItem from="1680491228792" duration="13815000" />
     </task>
     <task id="LOCAL-00001" summary="Changes">
       <created>1680420738964</created>
@@ -134,7 +129,21 @@
       <option name="project" value="LOCAL" />
       <updated>1680431710552</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Changes">
+      <created>1680508222223</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1680508222223</updated>
+    </task>
+    <task id="LOCAL-00004" summary="优化代码">
+      <created>1680510819683</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1680510819683</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -153,7 +162,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Changes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Changes" />
+    <MESSAGE value="优化代码" />
+    <option name="LAST_COMMIT_MESSAGE" value="优化代码" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/main_py$main.coverage" NAME="main 覆盖结果" MODIFIED="1680451585140" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
