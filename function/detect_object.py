@@ -58,7 +58,7 @@ def interface_img(img, model):
             det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], img.shape).round()
             for *xyxy, conf, cls in reversed(det):
                 xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
-                line = (cls, *xywh)
+                line = (names[int(cls)], *xywh)
                 line = ('%g ' * len(line)).rstrip() % line
                 line = line.split(' ')
                 if 0.1 < (xywh[2] / xywh[3]) < 0.9 and xywh[3] < 0.8:
@@ -75,7 +75,7 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 info_dir = os.path.join(ROOT, 'information.csv')
 
-conf_thres = 0.5
+conf_thres = 0.4
 iou_thres = 0.4
 max_det = 800
 

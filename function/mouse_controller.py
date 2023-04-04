@@ -43,19 +43,28 @@ mouse_x, mouse_y = pos_center
 
 out_check = 0
 
-def track_target_ratio(box_lists):
-    pos_min = (0, 0)
-    if len(box_lists) != 0:
-        dis_min = max_pos
-        for _box in box_lists:
-            x_target = int(_box[1] * grab_width + grab_x)
-            y_target = int(_box[2] * grab_height + grab_y)
-            if (x_target - pos_center[0]) ** 2 + (y_target - pos_center[1]) < dis_min ** 2:
-                dis_min = (x_target - pos_center[0]) ** 2 + (y_target - pos_center[1])
-                pos_min = (x_target - pos_center[0], y_target - pos_center[1])
-        return pos_min[0], pos_min[1], 1
-    else:
+
+def track_target_ratio(box_lists, offset_ratio=50):
+    if not box_lists:
         return 0, 0, 0
+    def dist_to_center(box):
+        x_target = int(box[1] * grab_width + grab_x)
+        y_target = int(box[2] * grab_height + grab_y)
+        return (x_target - pos_center[0]) ** 2 + (y_target - pos_center[1]) ** 2
+
+    closest_box = min(box_lists, key=dist_to_center)
+    x_target = int(closest_box[1] * grab_width + grab_x)
+    y_target = int(closest_box[2] * grab_height + grab_y)
+
+    # 计算偏移量
+    offset = int((y_target - closest_box[3]) * offset_ratio / 100)
+
+    # 根据偏移量调整y坐标
+    y_target -= offset
+
+    pos_min = (x_target - pos_center[0], y_target - pos_center[1])
+    return pos_min[0], pos_min[1], 1
+
 
 
 def show_ui():
@@ -87,14 +96,17 @@ def usb_control(usb, kill):
             box_lists = usb.get(timeout=0.01)
         except Empty:
             continue
-        pos_min = track_target_ratio(box_lists)
+
+        pos_min_x, pos_min_y, has_target = track_target_ratio(box_lists, offset_pixel_y * 5)
         if ((mouse_left_click and flag_lock_obj_left)
             or (mouse_right_click and flag_lock_obj_right)) \
-                and ((pos_min[0] ** 2 + pos_min[1] ** 2) >= offset_pixel_center ** 2) \
-                and pos_min[2]:
-            M_X = int(pos_min[0] * mouses_offset_ratio)
-            M_Y = int((pos_min[1] + offset_pixel_y) * mouses_offset_ratio)
+                and ((pos_min_x ** 2 + pos_min_y ** 2) >= offset_pixel_center ** 2) \
+                and has_target:
+            M_X = int(pos_min_x * mouses_offset_ratio)
+            M_Y = int(pos_min_y * mouses_offset_ratio)
             Mouse.mouse.move(M_X, M_Y)
+
+
 
 
 
@@ -118,7 +130,7 @@ class ShowWindows(QMainWindow):
         self.ui.label_13.setText(str(offset_pixel_center))
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
 
-        self.ui.horizontalSlider_3.setMinimum(-20)
+        self.ui.horizontalSlider_3.setMinimum(0)
         self.ui.horizontalSlider_3.setMaximum(20)
         self.ui.horizontalSlider_3.setSingleStep(1)
         self.ui.label_14.setText(str(offset_pixel_y))
