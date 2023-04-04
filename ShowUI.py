@@ -184,7 +184,7 @@ class Ui_MainWindow(object):
         self.label_7.setText(_translate("MainWindow", "身体锁定位置（↑/↓）："))
         self.label_14.setText(_translate("MainWindow", "NULL"))
         self.label_8.setText(_translate("MainWindow", "追踪速度："))
-        self.label_15.setText(_translate("MainWindow", " 越大越快"))
+        self.label_15.setText(_translate("MainWindow", " 越大越平滑"))
         self.label_10.setText(_translate("MainWindow", "中心停止范围："))
         self.label_16.setText(_translate("MainWindow", "越小锁定的位置越靠近目标中心"))
         self.label_18.setText(_translate("MainWindow", "身体锁定位置："))

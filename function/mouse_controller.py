@@ -11,7 +11,6 @@ from ShowUI import Ui_MainWindow
 from function.mouse.mouse import Mouse
 from milli_sleep import util
 
-
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
 if str(ROOT) not in sys.path:
@@ -34,7 +33,6 @@ grab_size = 640
 
 mouses = mouse.Controller()
 
-
 screen_size = tuple(map(int, screen_size.split('*')))
 screen_width, screen_height = screen_size
 grab = (int((screen_width - grab_size) / 2), int((screen_height - grab_size) / 2), grab_size, grab_size)
@@ -44,7 +42,6 @@ max_pos = int(pow((pow(pos_center[0], 2) + pow(pos_center[1], 2)), 0.5))
 mouse_x, mouse_y = pos_center
 
 out_check = 0
-
 
 # 定义 PID 参数
 kp = 0.1
@@ -59,7 +56,8 @@ kf.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0,
 kf.processNoiseCov = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32) * 0.03
 kf.measurementNoiseCov = np.array([[1, 0], [0, 1]], np.float32) * 0.1
 
-def track_target_ratio(box_lists, offset_ratio_y=50):
+
+def track_target_ratio(box_lists, y_offset_ratio=50, smoothness_factor=0.2):
     if not box_lists:
         return 0, 0, 0
 
@@ -73,7 +71,7 @@ def track_target_ratio(box_lists, offset_ratio_y=50):
     y_target = int(closest_box[2] * grab_height + grab_y)
 
     # 计算偏移量
-    offset = int((y_target - closest_box[3]) * offset_ratio_y / 100)
+    offset = int((y_target - closest_box[3]) * y_offset_ratio / 100)
 
     # 根据偏移量调整y坐标
     y_target -= offset
@@ -83,12 +81,28 @@ def track_target_ratio(box_lists, offset_ratio_y=50):
     pos_error = pid(pos_min[1])
     pos_min[1] += pos_error
 
+    # 计算当前鼠标位置和目标位置之间的距离
+    distance_to_target = np.sqrt((pos_min[0] ** 2) + (pos_min[1] ** 2))
+
+    # 根据距离调整平滑系数
+    if distance_to_target > 150:
+        smoothness_factor = 0
+    else:
+        smoothness_factor = min(smoothness_factor, distance_to_target / 100)
+
     # 使用 Kalman Filter 进行位置平滑
     pos_kf = np.array(pos_min, np.float32).reshape((2, 1))
     kf.correct(pos_kf)
+
+    # 先更新 pos_kf
     pos_kf = kf.predict()
 
-    return pos_kf[0, 0], pos_kf[1, 0], 1
+    # 平滑移动到目标位置
+    pos_target = np.array([x_target, y_target], np.float32).reshape((2, 1))
+    pos_smoothed = (1 - smoothness_factor) * pos_kf + smoothness_factor * pos_target
+
+    return pos_smoothed[0, 0], pos_smoothed[1, 0], 1
+
 
 
 def usb_control(usb, kill):
@@ -105,14 +119,12 @@ def usb_control(usb, kill):
         except Empty:
             continue
 
-        pos_min_x, pos_min_y, has_target = track_target_ratio(box_lists, offset_pixel_y * 5)
+        pos_min_x, pos_min_y, has_target = track_target_ratio(box_lists, offset_pixel_y * 5, mouses_offset_ratio)
         if ((mouse_left_click and flag_lock_obj_left)
             or (mouse_right_click and flag_lock_obj_right)) \
                 and ((pos_min_x ** 2 + pos_min_y ** 2) >= offset_pixel_center ** 2) \
                 and has_target:
-            x = int(pos_min_x * mouses_offset_ratio)
-            y = int(pos_min_y * mouses_offset_ratio)
-            Mouse.mouse.move(x, y)
+            Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
 
 
 def show_ui():
@@ -128,7 +140,6 @@ def on_click(x, y, button, pressed):
         mouse_left_click = pressed
     elif button == mouse.Button.right:
         mouse_right_click = pressed
-
 
 
 class ShowWindows(QMainWindow):
