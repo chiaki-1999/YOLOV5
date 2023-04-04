@@ -63,7 +63,7 @@ def lock_target(usb, kill):
             break
         fps_time = time.time()
         img = win32_capture(grab_info=grab_info)
-        milli_sleep(3)
+        milli_sleep(1)
         box_list = interface_img(img, model)
         usb.put(box_list)
         if show_monitor == '开启':

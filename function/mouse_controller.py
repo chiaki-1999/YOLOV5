@@ -2,14 +2,15 @@ import csv
 import os
 import sys
 from pathlib import Path
+from queue import Empty
 from threading import Thread
 
 import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from pynput import mouse
+
 from ShowUI import Ui_MainWindow
 from function.mouse.mouse import Mouse
-from milli_sleep import util
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
@@ -18,95 +19,72 @@ if str(ROOT) not in sys.path:
 info_dir = ROOT / 'information.csv'
 with open(info_dir, 'r', encoding='utf-8', newline='') as fr:
     reader = csv.DictReader(fr)
-    screen_size = reader[-1]['screen_size']
+    for r in reader:
+        pass
+    screen_size = r['screen_size']
+fr.close()
 
-# Global variables
 mouse_left_click = False
 mouse_right_click = False
 mouses_offset_ratio = 0.0
 flag_lock_obj_left = False
 flag_lock_obj_right = False
 offset_pixel_center = 0
-offset_pixel_y = 0
+offset_pixel_y = 0.0
 track_target = 0
 grab_size = 640
 
 mouses = mouse.Controller()
 
-screen_size = tuple(map(int, screen_size.split('*')))
+out_check = 0
+
+FILE = Path(__file__).resolve()
+ROOT = FILE.parents[0]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+info_dir = os.path.join(ROOT, 'information.csv')
+with open(info_dir, 'r', encoding='utf-8', newline='') as fr:
+    reader = csv.DictReader(fr)
+    for r in reader:
+        pass
+    screen_size = r['screen_size']
+fr.close()
+
+screen_size = screen_size.split('*')
+screen_size = (int(screen_size[0]), int(screen_size[1]))
+
 screen_width, screen_height = screen_size
-grab = (int((screen_width - grab_size) / 2), int((screen_height - grab_size) / 2), grab_size, grab_size)
+grab = (int((screen_size[0] - grab_size) / 2), int((screen_size[1] - grab_size) / 2), grab_size, grab_size)
 grab_x, grab_y, grab_width, grab_height = grab
 pos_center = (int(screen_width / 2), int(screen_height / 2))
 max_pos = int(pow((pow(pos_center[0], 2) + pow(pos_center[1], 2)), 0.5))
 mouse_x, mouse_y = pos_center
 
-out_check = 0
-
-# 定义 PID 参数
-kp = 0.1
-ki = 0.01
-kd = 0.01
-pid = PID(kp, ki, kd, setpoint=0)
-
-# 定义 Kalman Filter 参数
-kf = cv2.KalmanFilter(4, 2)
-kf.measurementMatrix = np.array([[1, 0, 0, 0], [0, 1, 0, 0]], np.float32)
-kf.transitionMatrix = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32)
-kf.processNoiseCov = np.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], np.float32) * 0.03
-kf.measurementNoiseCov = np.array([[1, 0], [0, 1]], np.float32) * 0.1
+mouses = mouse.Controller()
 
 
-def track_target_ratio(box_lists, y_offset_ratio=50, smoothness_factor=0.2):
-    if not box_lists:
+def track_target_ratio(box_lists, offset_ratio):
+    global mouse_x, mouse_y
+    if len(box_lists) == 0:
         return 0, 0, 0
 
-    def dist_to_center(box):
-        x_target = int(box[1] * grab_width + grab_x)
-        y_target = int(box[2] * grab_height + grab_y)
-        return (x_target - pos_center[0]) ** 2 + (y_target - pos_center[1]) ** 2
+    min_dist = float("inf")
+    for _box in box_lists:
+        x_target = int(_box[1] * grab_width + grab_x)
+        y_target = int(_box[2] * grab_height + grab_y)
+        dist = ((x_target - pos_center[0]) ** 2 + (y_target - pos_center[1]) ** 2)
+        offset = int(_box[4] * grab_height * offset_ratio)
+        if dist < min_dist:
+            min_dist = dist
+            mouse_x = x_target - pos_center[0]
+            mouse_y = y_target - pos_center[1] - offset
 
-    closest_box = min(box_lists, key=dist_to_center)
-    x_target = int(closest_box[1] * grab_width + grab_x)
-    y_target = int(closest_box[2] * grab_height + grab_y)
-
-    # 计算偏移量
-    offset = int((y_target - closest_box[3]) * y_offset_ratio / 100)
-
-    # 根据偏移量调整y坐标
-    y_target -= offset
-
-    # 计算位置偏差并进行 PID 控制
-    pos_min = (x_target - pos_center[0], y_target - pos_center[1])
-    pos_error = pid(pos_min[1])
-    pos_min[1] += pos_error
-
-    # 计算当前鼠标位置和目标位置之间的距离
-    distance_to_target = np.sqrt((pos_min[0] ** 2) + (pos_min[1] ** 2))
-
-    # 根据距离调整平滑系数
-    if distance_to_target > 150:
-        smoothness_factor = 0
-    else:
-        smoothness_factor = min(smoothness_factor, distance_to_target / 100)
-
-    # 使用 Kalman Filter 进行位置平滑
-    pos_kf = np.array(pos_min, np.float32).reshape((2, 1))
-    kf.correct(pos_kf)
-
-    # 先更新 pos_kf
-    pos_kf = kf.predict()
-
-    # 平滑移动到目标位置
-    pos_target = np.array([x_target, y_target], np.float32).reshape((2, 1))
-    pos_smoothed = (1 - smoothness_factor) * pos_kf + smoothness_factor * pos_target
-
-    return pos_smoothed[0, 0], pos_smoothed[1, 0], 1
-
+    return mouse_x, mouse_y, 1
 
 
 def usb_control(usb, kill):
-    global mouse_left_click, mouse_right_click, mouses_offset_ratio, offset_pixel_center, offset_pixel_y, out_check, flag_lock_obj_left, flag_lock_obj_right
+    global mouse_left_click, mouse_right_click, mouses_offset_ratio, offset_pixel_center, offset_pixel_y, out_check, \
+        flag_lock_obj_right, flag_lock_obj_left
     ui_show = Thread(target=show_ui)
     ui_show.start()
     listener_mouse = mouse.Listener(on_click=on_click)
@@ -119,12 +97,12 @@ def usb_control(usb, kill):
         except Empty:
             continue
 
-        pos_min_x, pos_min_y, has_target = track_target_ratio(box_lists, offset_pixel_y * 5, mouses_offset_ratio)
+        pos_min_x, pos_min_y, has_target = track_target_ratio(box_lists, offset_pixel_y)
         if ((mouse_left_click and flag_lock_obj_left)
             or (mouse_right_click and flag_lock_obj_right)) \
                 and ((pos_min_x ** 2 + pos_min_y ** 2) >= offset_pixel_center ** 2) \
                 and has_target:
-            Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
+            Mouse.mouse.move(int(pos_min_x * mouses_offset_ratio), int(pos_min_y * mouses_offset_ratio))
 
 
 def show_ui():
@@ -135,11 +113,13 @@ def show_ui():
 
 
 def on_click(x, y, button, pressed):
-    global mouse_left_click, mouse_right_click
+    global mouse_left_click, mouse_right_click, flag_lock_obj_left, flag_lock_obj_right, last_error, integral, pos_center
     if button == mouse.Button.left:
         mouse_left_click = pressed
     elif button == mouse.Button.right:
         mouse_right_click = pressed
+
+
 
 
 class ShowWindows(QMainWindow):
@@ -149,8 +129,8 @@ class ShowWindows(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.ui.horizontalSlider.setMinimum(0)
-        self.ui.horizontalSlider.setMaximum(20)
+        self.ui.horizontalSlider.setMinimum(5)
+        self.ui.horizontalSlider.setMaximum(15)
         self.ui.horizontalSlider.setSingleStep(1)
         self.ui.label_12.setText(str(mouses_offset_ratio))
         self.ui.horizontalSlider.valueChanged.connect(self.valueChange_1)
@@ -161,8 +141,8 @@ class ShowWindows(QMainWindow):
         self.ui.label_13.setText(str(offset_pixel_center))
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
 
-        self.ui.horizontalSlider_3.setMinimum(0)
-        self.ui.horizontalSlider_3.setMaximum(20)
+        self.ui.horizontalSlider_3.setMinimum(-3)
+        self.ui.horizontalSlider_3.setMaximum(4)
         self.ui.horizontalSlider_3.setSingleStep(1)
         self.ui.label_14.setText(str(offset_pixel_y))
         self.ui.horizontalSlider_3.valueChanged.connect(self.valueChange_3)
@@ -184,7 +164,7 @@ class ShowWindows(QMainWindow):
 
     def valueChange_3(self):
         global offset_pixel_y
-        offset_pixel_y = self.ui.horizontalSlider_3.value()
+        offset_pixel_y = round(self.ui.horizontalSlider_3.value() / 10, 1)
         self.ui.label_14.setText(str(offset_pixel_y))
 
     def boxChange_1(self):

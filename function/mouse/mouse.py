@@ -15,6 +15,7 @@ with open(dll_file, 'rb') as f:
         log.exception("Failed to load DLL file: %s", dll_file)
         ok = False
 
+
 class Mouse:
     class mouse:
         @staticmethod
