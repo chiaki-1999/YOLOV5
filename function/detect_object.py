@@ -23,24 +23,20 @@ def load_model(img_size):
 def interface_img(img, model):
     stride, names = model.stride, model.names
     h, w = img.shape[:2]
-    img = cv2.resize(img, (int(w * 0.8), int(h * 0.8)), interpolation=cv2.INTER_LINEAR)
+    img = cv2.resize(img, (int(w * 0.8), int(h * 0.7)), interpolation=cv2.INTER_LINEAR)
 
     im = letterbox(img, 640, stride=stride, auto=True)[0]
     im = im.transpose((2, 0, 1))[::-1]
     im = np.ascontiguousarray(im)
 
-    dt = (Profile(), Profile(), Profile())
-    with dt[0]:
-        im = torch.from_numpy(im).to(model.device)
-        im = im.half() if model.fp16 else im.float()
-        im /= 255
-        if len(im.shape) == 3:
-            im = im[None]
+    im = torch.from_numpy(im).to(model.device)
+    im = im.half() if model.fp16 else im.float()
+    im = im.div(255.0).clamp(0.0, 1.0)  # 使用 .div() 方法进行除法操作，并使用 .clamp() 方法限制数据范围在 [0, 1] 之间
+    if len(im.shape) == 3:
+        im = im[None]
 
-    with dt[1]:
+    with torch.no_grad():
         pred = model(im, augment=False, visualize=False)
-
-    with dt[2]:
         pred = non_max_suppression(pred, conf_thres, iou_thres, max_det=max_det)
 
     box_list = []
@@ -64,7 +60,7 @@ info_dir = os.path.join(ROOT, 'information.csv')
 
 conf_thres = 0.55
 iou_thres = 0.4
-max_det = 800
+max_det = 1000
 
 with open(info_dir, 'r', encoding='utf-8', newline='') as fr:
     reader = csv.DictReader(fr)

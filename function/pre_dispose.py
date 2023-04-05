@@ -54,27 +54,34 @@ def draw_fps(img, fps_time, fps_list):
     return img
 
 
+WINDOW_NAME = "window"
+
+
 def lock_target(usb, kill):
-    fps_list = []
     model = load_model(img_size=640)
     grab_info = screen_info
     while True:
         if kill.value == 1:
             break
+
+        try:
+            img = win32_capture(grab_info=grab_info)
+        except Exception:
+            continue
+
         fps_time = time.time()
-        img = win32_capture(grab_info=grab_info)
-        milli_sleep(1)
         box_list = interface_img(img, model)
-        usb.put(box_list)
+        data = (box_list, fps_time)
+        usb.put(data)
+        milli_sleep(3)
         if show_monitor == '开启':
             img = draw_box(img, box_list)
-            img = draw_fps(img, fps_time, fps_list)
-            cv2.namedWindow('game_plug_in', cv2.WINDOW_KEEPRATIO)
-            cv2.imshow('game_plug_in', img)
-            hwnd = win32gui.FindWindow(None, 'game_plug_in')
+            img = draw_fps(img, fps_time, box_list)
+            cv2.imshow(WINDOW_NAME, img)
+            hwnd = win32gui.FindWindow(None, WINDOW_NAME)
             win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
             cv2.waitKey(1)
-            box_list.clear()
+        box_list[:] = []
 
 
 def main():
