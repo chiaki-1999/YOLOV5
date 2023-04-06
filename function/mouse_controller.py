@@ -14,7 +14,7 @@ from pynput import mouse
 
 from ShowUI import Ui_MainWindow
 from function.mouse.mouse import Mouse
-from util import PID, milli_sleep
+from util import PID, fov_y, fov_x
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
@@ -66,7 +66,7 @@ mouse_x, mouse_y = pos_center
 
 mouses = mouse.Controller()
 
-kp = 0.4  # 比例系数
+kp = 0.3  # 比例系数
 ki = 0.02  # 积分系数
 kd = 0.01  # 微分系数
 
@@ -91,7 +91,8 @@ def track_target_ratio(box_lists, offset_ratio, dt):
 
     if closest_box is None:
         return 0, 0, 0
-
+    mouse_x = fov_x(mouse_x)
+    mouse_y = fov_y(mouse_y)
     pid_x = PID(kp, ki, kd, 20, dt, 10).cmd_pid(int(mouse_x))
     pid_y = PID(kp, ki, kd, 20, dt, 10).cmd_pid(int(mouse_y))
     return pid_x, pid_y, 1
@@ -108,19 +109,17 @@ def usb_control(usb, kill):
     while True:
         kill.value = out_check
         try:
-            data = usb.get(timeout=0.02)
+            data = usb.get(timeout=0.01)
         except Empty:
             continue
+        zb = time.time()
         box_lists, last_time = data
         pos_min_x, pos_min_y, has_target = track_target_ratio(box_lists, offset_pixel_y, time.time() - last_time)
         if ((mouse_left_click and flag_lock_obj_left)
             or (mouse_right_click and flag_lock_obj_right)) \
                 and has_target:
-            if shun_ju:
-                Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
-                auto_fire()
-            else:
-                Mouse.mouse.move(int(pos_min_x * mouses_offset_ratio), int(pos_min_y * mouses_offset_ratio))
+            Mouse.mouse.move(int(pos_min_x * mouses_offset_ratio), int(pos_min_y * mouses_offset_ratio))
+            print(" 计算坐标 ： {:.2f} ms".format((time.time() - zb) * 1000))
 
 
 def auto_fire():

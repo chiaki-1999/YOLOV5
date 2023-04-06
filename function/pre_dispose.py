@@ -63,17 +63,19 @@ def lock_target(usb, kill):
     while True:
         if kill.value == 1:
             break
-
-        try:
-            img = win32_capture(grab_info=grab_info)
-        except Exception:
-            continue
-
+        milli_sleep(3)
+        yc = time.time()
+        img = win32_capture(grab_info=grab_info)
+        jt = time.time()
         fps_time = time.time()
         box_list = interface_img(img, model)
+        tl = time.time()
+        if box_list:
+            print(" 截图延迟 ： {:.2f} ms".format((jt - yc) * 1000))
+            print(" 推理延迟 ： {:.2f} ms".format((tl - fps_time) * 1000))
+            print(" 总计耗时 ： {:.2f} ms".format(((tl - fps_time) + (tl - fps_time)) * 1000))
         data = (box_list, fps_time)
         usb.put(data)
-        milli_sleep(3)
         if show_monitor == '开启':
             img = draw_box(img, box_list)
             img = draw_fps(img, fps_time, box_list)
@@ -81,7 +83,7 @@ def lock_target(usb, kill):
             hwnd = win32gui.FindWindow(None, WINDOW_NAME)
             win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
             cv2.waitKey(1)
-        box_list[:] = []
+            cv2.destroyAllWindows()
 
 
 def main():

@@ -49,6 +49,9 @@ class Mouse:
         def move(x, y):
             if ok and x != 0 and y != 0:
                 driver.moveR(x, y)
+                return True
+            else:
+                return False
 
     class keyboard:
         @staticmethod

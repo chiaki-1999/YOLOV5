@@ -1,3 +1,5 @@
+import ctypes
+
 import cv2
 import numpy as np
 import win32api
@@ -17,16 +19,26 @@ def win32_capture(grab_info):
     gx, gy, gs = grab_info
     gw = gs
     gh = gs
+
     saveBitMap.CreateCompatibleBitmap(mfcDC, gw, gh)
     saveDC.SelectObject(saveBitMap)
+
     saveDC.BitBlt((0, 0), (gw, gh), mfcDC, (gx, gy), win32con.SRCCOPY)
     signed_ints_array = saveBitMap.GetBitmapBits(True)
     img = np.frombuffer(signed_ints_array, dtype='uint8')
     img.shape = (gh, gw, 4)
+    img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+
     win32gui.DeleteObject(saveBitMap.GetHandle())
     mfcDC.DeleteDC()
     saveDC.DeleteDC()
-    return cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+
+    return img
+
+
+
+
+
 
 
 ###获取真实的分辨率

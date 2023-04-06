@@ -79,26 +79,31 @@ def calculate_fov(target_move, base_len, total_w, total_h):
     return fov_x, fov_y
 
 
-def calculate_pixel_move(delta_x, delta_y):
-    FOV_X = 106.260205
-    FOV_Y = 73.739795
+PIXEL_X = 5650
+PIXEL_Y = 2750
+WIDTH = 2560
+HEIGHT = 1440
+FOV_X = 84.11
+FOV_Y = 60
 
-    PIXEL_X = 6547
-    PIXEL_Y = 3228
 
-    WIDTH = 1920
-    HEIGHT = 1080
+def fov_x(delta_x):
+    per_pixel_rad = PIXEL_X / (2 * math.pi)
+    delta_abs_x = abs(delta_x)
+    sup_distance = (WIDTH / 2) / math.tan((FOV_X * math.pi / 180) / 2)
+    target_angle_rad = math.atan(delta_abs_x / sup_distance)
+    target_move = target_angle_rad * per_pixel_rad
+    return (-1) * target_move if delta_x < 0 else target_move
 
-    PIXEL_RAD_X = PIXEL_X / (2 * math.pi)
-    PIXEL_RAD_Y = PIXEL_Y / math.pi
 
-    SUP_DISTANCE_X = (WIDTH / 2) / math.tan((FOV_X * math.pi / 180) / 2)
-    SUP_DISTANCE_Y = (HEIGHT / 2) / math.tan((FOV_Y * math.pi / 180) / 2)
+def fov_y(delta_y):
+    per_pixel_rad = PIXEL_Y / math.pi
+    delta_abs_y = abs(delta_y)
+    sup_distance = (HEIGHT / 2) / math.tan((FOV_Y * math.pi / 180) / 2)
+    target_angle_rad = math.atan(delta_abs_y / sup_distance)
+    target_move = target_angle_rad * per_pixel_rad
+    return (-1) * target_move if delta_y < 0 else target_move
 
-    target_move_x = math.atan(abs(delta_x) / SUP_DISTANCE_X) * PIXEL_RAD_X
-    target_move_y = math.atan(abs(delta_y) / SUP_DISTANCE_Y) * PIXEL_RAD_Y
-
-    return -target_move_x if delta_x < 0 else target_move_x, -target_move_y if delta_y < 0 else target_move_y
 
 
 class PID(object):
@@ -155,6 +160,3 @@ class PID(object):
         self.last_error = err
 
         return self.last_output
-
-
-
