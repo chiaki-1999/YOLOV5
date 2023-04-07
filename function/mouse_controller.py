@@ -167,13 +167,13 @@ class ShowWindows(QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.horizontalSlider.setMinimum(0)
-        self.ui.horizontalSlider.setMaximum(10)
+        self.ui.horizontalSlider.setMaximum(100)
         self.ui.horizontalSlider.setSingleStep(1)
         self.ui.label_12.setText(str(ki))
         self.ui.horizontalSlider.valueChanged.connect(self.valueChange_1)
 
         self.ui.horizontalSlider_2.setMinimum(0)
-        self.ui.horizontalSlider_2.setMaximum(10)
+        self.ui.horizontalSlider_2.setMaximum(100)
         self.ui.horizontalSlider_2.setSingleStep(1)
         self.ui.label_13.setText(str(kd))
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
@@ -185,7 +185,7 @@ class ShowWindows(QMainWindow):
         self.ui.horizontalSlider_3.valueChanged.connect(self.valueChange_3)
 
         self.ui.horizontalSlider_3.setMinimum(0)
-        self.ui.horizontalSlider_3.setMaximum(10)
+        self.ui.horizontalSlider_3.setMaximum(100)
         self.ui.horizontalSlider_3.setSingleStep(1)
         self.ui.label_14.setText(str(kp))
         self.ui.horizontalSlider_3.valueChanged.connect(self.valueChange_4)
