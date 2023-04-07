@@ -161,7 +161,7 @@ def on_click(x, y, button, pressed):
 
 class ShowWindows(QMainWindow):
     def __init__(self):
-        global mouses_offset_ratio, offset_pixel_center, offset_pixel_y
+        global kp, ki, kd,  offset_pixel_y
         super(ShowWindows, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -169,13 +169,13 @@ class ShowWindows(QMainWindow):
         self.ui.horizontalSlider.setMinimum(0)
         self.ui.horizontalSlider.setMaximum(10)
         self.ui.horizontalSlider.setSingleStep(1)
-        self.ui.label_12.setText(str(mouses_offset_ratio))
+        self.ui.label_12.setText(str(ki))
         self.ui.horizontalSlider.valueChanged.connect(self.valueChange_1)
 
-        self.ui.horizontalSlider_2.setMinimum(4)
-        self.ui.horizontalSlider_2.setMaximum(12)
+        self.ui.horizontalSlider_2.setMinimum(0)
+        self.ui.horizontalSlider_2.setMaximum(10)
         self.ui.horizontalSlider_2.setSingleStep(1)
-        self.ui.label_13.setText(str(offset_pixel_center))
+        self.ui.label_13.setText(str(kd))
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
 
         self.ui.horizontalSlider_3.setMinimum(-40)
@@ -184,20 +184,32 @@ class ShowWindows(QMainWindow):
         self.ui.label_14.setText(str(offset_pixel_y))
         self.ui.horizontalSlider_3.valueChanged.connect(self.valueChange_3)
 
+        self.ui.horizontalSlider_3.setMinimum(0)
+        self.ui.horizontalSlider_3.setMaximum(10)
+        self.ui.horizontalSlider_3.setSingleStep(1)
+        self.ui.label_14.setText(str(kp))
+        self.ui.horizontalSlider_3.valueChanged.connect(self.valueChange_4)
+
+
         self.ui.checkBox.stateChanged.connect(self.boxChange_1)
         self.ui.checkBox_2.stateChanged.connect(self.boxChange_2)
         self.ui.checkBox_3.stateChanged.connect(self.boxChange_3)
 
         self.ui.pushButton_3.clicked.connect(self.outButton)
 
+
+    def valueChange_4(self):
+        global kp
+        kp = round(self.ui.horizontalSlider_4.value() / 10, 1)
+        self.ui.label_12.setText(str(mouses_offset_ratio))
     def valueChange_1(self):
-        global mouses_offset_ratio
-        mouses_offset_ratio = round(self.ui.horizontalSlider.value() / 10, 1)
+        global ki
+        ki = round(self.ui.horizontalSlider.value() / 10, 1)
         self.ui.label_12.setText(str(mouses_offset_ratio))
 
     def valueChange_2(self):
-        global offset_pixel_center
-        offset_pixel_center = self.ui.horizontalSlider_2.value()
+        global kd
+        kd = self.ui.horizontalSlider_2.value()
         self.ui.label_13.setText(str(offset_pixel_center))
 
     def valueChange_3(self):
@@ -221,16 +233,6 @@ class ShowWindows(QMainWindow):
             self.ui.label_2.setText('启动状态（Open）')
         else:
             self.ui.checkBox_3.setChecked(False)
-            self.ui.label_2.setText('启动状态（Close）')
-        winsound.Beep(600, 200)
-
-    def boxChange_3(self):
-        global shun_ju
-        shun_ju = self.ui.checkBox_3.isChecked()
-        if shun_ju:
-            self.ui.checkBox_2.setChecked(True)
-            self.ui.label_2.setText('启动状态（Open）')
-        else:
             self.ui.label_2.setText('启动状态（Close）')
         winsound.Beep(600, 200)
 
