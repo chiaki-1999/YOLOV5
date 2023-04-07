@@ -84,7 +84,7 @@ PIXEL_Y = 2750
 WIDTH = 2560
 HEIGHT = 1440
 FOV_X = 84.11
-FOV_Y = 60
+FOV_Y = 54
 
 
 def fov_x(delta_x):
@@ -106,57 +106,55 @@ def fov_y(delta_y):
 
 
 
-class PID(object):
-    def __init__(self, kp, ki, kd, imax, dt, error_threshold):
-        self.Kp = kp
-        self.Ki = ki
-        self.Kd = kd
-        self.imax = imax
-        self.total_error = 0
-        self.last_output = 0
-        self.last_error = 0
-        self.dt = dt
-        self.error_threshold = error_threshold
-        self.last_error_sign = None
-        self.iterations_since_last_change = 0
+class PID:
+    def __init__(self, p, i, d, set_value, sample_time):
+        self.kp = p
+        self.ki = i
+        self.kd = d
+        self.set_value = set_value  # 目标值
+        self.last_error = 0  # 上一次误差
+        self.pre_last_error = 0  # 临时存误差
+        self.err_sum = 0  # 误差总和
+        self.sample_time = sample_time
+        self.last_output = None
+        self.last_timestamp = None
 
-    def cmd_pid(self, err):
-        # 更新总误差
-        self.total_error += err * self.dt
-        self.total_error = max(min(self.total_error, self.imax), -self.imax)
+    # 位置式PID
+    def pid_position(self, cur_value, timestamp=None):
+        # 计算时间间隔
+        if timestamp is not None and self.last_timestamp is not None:
+            dt = (timestamp - self.last_timestamp).total_seconds()
+        else:
+            dt = self.sample_time
 
-        # 更新输出值
-        d_err = (err - self.last_error) / self.dt
-        self.last_output = self.Kp * err + self.Ki * self.total_error + self.Kd * d_err
+        # 计算误差
+        error = self.set_value - cur_value
 
-        # 动态调整 PID 参数
-        if abs(err) > self.error_threshold:
-            # 如果误差符号发生变化，则重新开始计数
-            if self.last_error_sign is None or (err >= 0) != (self.last_error_sign >= 0):
-                self.last_error_sign = 1 if err >= 0 else -1
-                self.iterations_since_last_change = 0
-            else:
-                self.iterations_since_last_change += 1
+        # 计算误差积分项
+        self.err_sum += (error + self.last_error) / 2 * dt
 
-            # 根据计数和误差符号调整 PID 参数
-            if self.iterations_since_last_change == 0:
-                self.Kp *= 0.8
-                self.Ki *= 0.1
-                self.Kd *= 0.01
-            elif self.iterations_since_last_change == 1:
-                self.Kp *= 0.6
-                self.Ki *= 0.2
-                self.Kd *= 0.01
-            elif self.iterations_since_last_change == 2:
-                self.Kp *= 0.4
-                self.Ki *= 0.2
-                self.Kd *= 0.01
-            else:
-                self.Kp *= 0.2
-                self.Ki *= 0.2
-                self.Kd *= 0.01
+        # 计算误差微分项
+        if self.last_output is not None:
+            d_error = (error - self.last_error) / dt
+        else:
+            d_error = 0
 
-        # 更新误差值
-        self.last_error = err
+        # 计算控制量
+        output = self.kp * error + self.ki * self.err_sum + self.kd * d_error
 
-        return self.last_output
+        # 保存变量
+        self.last_error = error
+        self.last_output = output
+        self.last_timestamp = timestamp
+
+        return output
+
+    def update_set_value(self, kp, ki, kd):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.last_error = None
+        self.pre_last_error = None
+        self.err_sum = 0
+        self.last_output = None
+        self.last_timestamp = None

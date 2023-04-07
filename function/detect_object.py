@@ -58,8 +58,8 @@ if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 info_dir = os.path.join(ROOT, 'information.csv')
 
-conf_thres = 0.55
-iou_thres = 0.4
+conf_thres = 0.5
+iou_thres = 0.5
 max_det = 1000
 
 with open(info_dir, 'r', encoding='utf-8', newline='') as fr:

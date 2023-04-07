@@ -80,7 +80,7 @@ class MainWindows(QMainWindow):
         self.ui.label_10.setText(str(screen_size))
         pth_dir = "E:/CODE/APEX_Beta_V5_3.0/YOLOV5/weights/cfdw.pt"
         yaml_dir = self.ui.label_8.text()
-        monitor = '开启' if self.ui.checkBox_2.isChecked() else '关闭'
+        monitor = 'True' if self.ui.checkBox_2.isChecked() else 'False'
 
         info = (f'屏幕编号：{screen_num} \t 屏幕倍率：{screen_multi}\t 屏幕分辨率：{screen_size}\n'
                 f'权重路径：{pth_dir}\n'

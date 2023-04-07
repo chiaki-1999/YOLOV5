@@ -9,34 +9,40 @@ import win32print
 import win32ui
 
 
-def win32_capture(grab_info):
-    hwnd = 0
-    hwndDC = win32gui.GetWindowDC(hwnd)
-    mfcDC = win32ui.CreateDCFromHandle(hwndDC)
-    saveDC = mfcDC.CreateCompatibleDC()
-    saveBitMap = win32ui.CreateBitmap()
+# def win32_capture(grab_info):
+#     hwnd = 0
+#     hwndDC = win32gui.GetWindowDC(hwnd)
+#     mfcDC = win32ui.CreateDCFromHandle(hwndDC)
+#     saveDC = mfcDC.CreateCompatibleDC()
+#     saveBitMap = win32ui.CreateBitmap()
+#
+#     gx, gy, gs = grab_info
+#     gw = gs
+#     gh = gs
+#
+#     saveBitMap.CreateCompatibleBitmap(mfcDC, gw, gh)
+#     saveDC.SelectObject(saveBitMap)
+#
+#     saveDC.BitBlt((0, 0), (gw, gh), mfcDC, (gx, gy), win32con.SRCCOPY)
+#     signed_ints_array = saveBitMap.GetBitmapBits(True)
+#     img = np.frombuffer(signed_ints_array, dtype='uint8')
+#     img.shape = (gh, gw, 4)
+#     img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
+#
+#     win32gui.DeleteObject(saveBitMap.GetHandle())
+#     mfcDC.DeleteDC()
+#     saveDC.DeleteDC()
+#
+#     return img
 
+def win32_capture(grab_info, grab_screen):
     gx, gy, gs = grab_info
-    gw = gs
-    gh = gs
-
-    saveBitMap.CreateCompatibleBitmap(mfcDC, gw, gh)
-    saveDC.SelectObject(saveBitMap)
-
-    saveDC.BitBlt((0, 0), (gw, gh), mfcDC, (gx, gy), win32con.SRCCOPY)
-    signed_ints_array = saveBitMap.GetBitmapBits(True)
-    img = np.frombuffer(signed_ints_array, dtype='uint8')
-    img.shape = (gh, gw, 4)
-    img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
-
-    win32gui.DeleteObject(saveBitMap.GetHandle())
-    mfcDC.DeleteDC()
-    saveDC.DeleteDC()
-
-    return img
-
-
-
+    gw = gh = gs
+    with grab_screen:
+        if grab_screen.w != gw or grab_screen.h != gh:
+            grab_screen.init(gw, gh)
+        screenshot = grab_screen.capture(gx, gy)
+    return screenshot
 
 
 

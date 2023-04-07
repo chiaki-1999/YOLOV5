@@ -58,33 +58,41 @@ WINDOW_NAME = "window"
 
 
 def lock_target(usb, kill):
+    global show_monitor
     model = load_model(img_size=640)
     grab_info = screen_info
-    while True:
-        if kill.value == 1:
-            break
-        milli_sleep(3)
-        yc = time.time()
-        img = win32_capture(grab_info=grab_info)
-        jt = time.time()
-        fps_time = time.time()
-        box_list = interface_img(img, model)
-        tl = time.time()
-        if box_list:
-            print(" 截图延迟 ： {:.2f} ms".format((jt - yc) * 1000))
-            print(" 推理延迟 ： {:.2f} ms".format((tl - fps_time) * 1000))
-            print(" 总计耗时 ： {:.2f} ms".format(((tl - fps_time) + (tl - fps_time)) * 1000))
-        data = (box_list, fps_time)
-        usb.put(data)
-        if show_monitor == '开启':
-            img = draw_box(img, box_list)
-            img = draw_fps(img, fps_time, box_list)
-            cv2.imshow(WINDOW_NAME, img)
-            hwnd = win32gui.FindWindow(None, WINDOW_NAME)
-            win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-            cv2.waitKey(1)
-            cv2.destroyAllWindows()
-
+    grab_screen = GrabScreen()
+    try:
+        while True:
+            if kill.value == 1:
+                break
+            time.sleep(0.03)  # 适当增加等待时间
+            yc = time.time()
+            img = win32_capture(grab_info=grab_info, grab_screen=grab_screen)
+            jt = time.time()
+            fps_time = time.time()
+            box_list = interface_img(img, model)  # 这里使用 img
+            tl = time.time()
+            if box_list:
+                print(" 截图延迟 ： {:.2f} ms".format((jt - yc) * 1000))
+                print(" 推理延迟 ： {:.2f} ms".format((tl - fps_time) * 1000))
+                print(" 总计耗时 ： {:.2f} ms".format(((tl - fps_time) + (tl - fps_time)) * 1000))
+            data = (box_list, fps_time)
+            usb.put(data)
+            if show_monitor == 'True':
+                if not CV2.getWindowProperty(WINDOW_NAME, CV2.WND_PROP_VISIBLE):
+                    show_monitor = 'False'
+                    print(" 识别窗口已关闭 ")
+                    cv2.destroyAllWindows()
+                    cv2.waitKey(1)
+                    break  # 直接跳出循环
+                img = draw_box(img, box_list)
+                img = draw_fps(img, fps_time, box_list)
+                cv2.imshow(WINDOW_NAME, img)
+                cv2.waitKey(1)
+                cv2.destroyAllWindows()
+    finally:
+        grab_screen.release_resource()
 
 def main():
     set_start_method('spawn')
