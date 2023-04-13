@@ -1,28 +1,32 @@
 import csv
 import os
+import sys
+import time
 from pathlib import Path
-from sys import platform, path
+from sys import platform
 
 import win32api
+import win32process
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
 from win32con import PROCESS_ALL_ACCESS
 from win32process import SetPriorityClass, ABOVE_NORMAL_PRIORITY_CLASS
 
 import function.pre_dispose
-from SetUI import Ui_MainWindow
+from FirstUI import Ui_MainWindow
 from function.grab_screen import get_screen_size
-from util import set_dpi, is_admin, milli_sleep
+from util import is_admin
+from util import set_dpi
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]
-if str(ROOT) not in path:
-    path.append(str(ROOT))
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
 info_dir = os.path.join(ROOT, 'function', 'information.csv')
 
 screen_W, screen_H = get_screen_size()
 
 
-def get_grab_info(screen=0, multi=1.0, gs=640):
+def get_grab_info(screen=0, multi=1.0, gs=416):
     monitor_dev = win32api.EnumDisplayMonitors(None, None)
     x1 = monitor_dev[screen][2][0]
     y1 = monitor_dev[screen][2][1]
@@ -53,15 +57,15 @@ class MainWindows(QMainWindow):
         self.ui.pushButton_3.clicked.connect(self.check_push)
         self.ui.pushButton_4.clicked.connect(self.run_push)
         self.ui.progressBar.setRange(0, 100)
+
         self.ui.progressBar.setValue(0)
 
     def run_push(self):
-        function.pre_dispose.main()
+        function.pre_dispose.run()
         for i in range(1, 101):
-            milli_sleep(300)
+            time.sleep(0.1)
             self.ui.progressBar.setValue(i)
         self.close()
-        exit(1)
 
     def pth_push(self):
         choice = QFileDialog.getOpenFileName(MainWindows(), "选择权重文件")[0]
@@ -78,9 +82,9 @@ class MainWindows(QMainWindow):
         screen_info = get_grab_info(screen_num, screen_multi)
         screen_size = (str(screen_info[0]) + '*' + str(screen_info[1]))
         self.ui.label_10.setText(str(screen_size))
-        pth_dir = "E:/CODE/APEX_Beta_V5_3.0/YOLOV5/weights/cfdw.pt"
-        yaml_dir = self.ui.label_8.text()
-        monitor = 'True' if self.ui.checkBox_2.isChecked() else 'False'
+        pth_dir = 'E:\CODE\APEX_Beta_V5_3.0\YOLOV5\weights\cf_416_9200pic.engine'
+        yaml_dir = 'E:\CODE\APEX_Beta_V5_3.0\YOLOV5\weights\date.yaml'
+        monitor = '开启' if self.ui.checkBox_2.isChecked() else '关闭'
 
         info = (f'屏幕编号：{screen_num} \t 屏幕倍率：{screen_multi}\t 屏幕分辨率：{screen_size}\n'
                 f'权重路径：{pth_dir}\n'
@@ -94,27 +98,28 @@ class MainWindows(QMainWindow):
 
         with open(info_dir, 'w', encoding='utf-8', newline='') as fp:
             writer = csv.writer(fp)
+
             writer.writerow(header)
+
             writer.writerows(data)
         fp.close()
 
         for i in range(1, 101):
-            milli_sleep(5)
+            time.sleep(0.005)
             self.ui.progressBar.setValue(i)
 
 
 if __name__ == '__main__':
-    if not is_admin():  # 检查管理员权限
-        print("=======请管理员身份运行此程序=======")
+    if not is_admin():
+        print("Please run this program as an administrator")
         exit(1)
-    set_dpi()  # 设置高DPI不受影响
-    # 提升进程优先级
+    set_dpi()
     if platform == 'win32':
-        pid = win32api.GetCurrentProcessId()
-        handle = win32api.OpenProcess(PROCESS_ALL_ACCESS, True, pid)
-        SetPriorityClass(handle, ABOVE_NORMAL_PRIORITY_CLASS)
+        handle = win32api.GetCurrentProcess()
+        win32process.SetPriorityClass(handle, win32process.ABOVE_NORMAL_PRIORITY_CLASS)
     else:
         os.nice(1)
+
     app = QApplication([])
     windows = MainWindows()
     windows.show()

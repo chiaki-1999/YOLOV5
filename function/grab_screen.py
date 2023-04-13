@@ -1,50 +1,30 @@
-import ctypes
-
-import cv2
-import numpy as np
 import win32api
 import win32con
 import win32gui
 import win32print
-import win32ui
+
+from function.readini import screen_info
+from function.win32截图速度测试 import Capture
+
+gx, gy, gs = screen_info
+WindowName = ['CrossFire', 'Apex']
+hwnd = 0
+
+Cp = Capture()
 
 
-# def win32_capture(grab_info):
-#     hwnd = 0
-#     hwndDC = win32gui.GetWindowDC(hwnd)
-#     mfcDC = win32ui.CreateDCFromHandle(hwndDC)
-#     saveDC = mfcDC.CreateCompatibleDC()
-#     saveBitMap = win32ui.CreateBitmap()
-#
-#     gx, gy, gs = grab_info
-#     gw = gs
-#     gh = gs
-#
-#     saveBitMap.CreateCompatibleBitmap(mfcDC, gw, gh)
-#     saveDC.SelectObject(saveBitMap)
-#
-#     saveDC.BitBlt((0, 0), (gw, gh), mfcDC, (gx, gy), win32con.SRCCOPY)
-#     signed_ints_array = saveBitMap.GetBitmapBits(True)
-#     img = np.frombuffer(signed_ints_array, dtype='uint8')
-#     img.shape = (gh, gw, 4)
-#     img = cv2.cvtColor(img, cv2.COLOR_RGBA2RGB)
-#
-#     win32gui.DeleteObject(saveBitMap.GetHandle())
-#     mfcDC.DeleteDC()
-#     saveDC.DeleteDC()
-#
-#     return img
-
-def win32_capture(grab_info, grab_screen):
-    gx, gy, gs = grab_info
-    gw = gh = gs
-    with grab_screen:
-        if grab_screen.w != gw or grab_screen.h != gh:
-            grab_screen.init(gw, gh)
-        screenshot = grab_screen.capture(gx, gy)
-    return screenshot
+def win32_capture_Init():
+    global hwnd
+    for name in WindowName:
+        handle = win32gui.FindWindow(None, name)
+        if handle:
+            hwnd = handle
+            break
+    Cp.InitEx(hwnd, gx, gy, gs, gs)
 
 
+def win32_capture():
+    return Cp.capture()
 
 
 ###获取真实的分辨率

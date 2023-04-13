@@ -2,7 +2,8 @@ import ctypes
 import logging
 import os
 import random
-import time
+
+import numpy
 
 from util import milli_sleep
 
@@ -36,9 +37,9 @@ class Mouse:
         def click(code):
             if ok:
                 driver.mouse_down(code)
-                milli_sleep(random.randint(15, 30))
+                milli_sleep(numpy.random.uniform(0.01, 0.03))
                 driver.mouse_up(code)
-                milli_sleep(random.randint(15, 30))
+                milli_sleep(numpy.random.uniform(0.01, 0.03))
 
         @staticmethod
         def scroll(a):
@@ -48,10 +49,7 @@ class Mouse:
         @staticmethod
         def move(x, y):
             if ok and x != 0 and y != 0:
-                driver.moveR(x, y)
-                return True
-            else:
-                return False
+                driver.moveR(x, y, True)
 
     class keyboard:
         @staticmethod
@@ -69,4 +67,3 @@ class Mouse:
             if ok:
                 driver.key_down(code)
                 driver.key_up(code)
-
