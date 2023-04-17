@@ -1,3 +1,4 @@
+import heapq
 import time
 from multiprocessing import Process, get_context
 from threading import Thread
@@ -14,16 +15,16 @@ from SecondUI import Ui_MainWindow
 from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture, win32_capture_Init
 from function.mouse_controller import usb_control
-from function.readini import screen_info, get_show_monitor
+from function.readini import screen_info, get_show_monitor, grab_width, grab_x, pos_center, grab_y, grab_height
 
-mouses_offset_ratio = 1.33
+mouses_offset_ratio = 1.4
 flag_lock_obj_both = False
 flag_lock_obj_left = False
 flag_lock_obj_right = False
-offset_pixel_center = 0.72
+offset_pixel_center = 1
 offset_pixel_y = 0.3
 out_check = 0
-conf = 0.08
+conf = 0.04
 
 
 def show_ui():
@@ -34,8 +35,8 @@ def show_ui():
 
 
 def mul_thr(usb):
-    Thread(target=show_ui, daemon=True).start()
-    Thread(target=lock_target(usb), daemon=True).start()
+    Thread(target=show_ui).start()
+    Thread(target=lock_target(usb)).start()
 
 
 def run():
@@ -48,9 +49,9 @@ def run():
 show_monitor = get_show_monitor()
 
 
-def lock_target(usb):
+def lock_target(conn1):
     global show_monitor, out_check
-    model = load_model(416)  # 将图像大小减小到320
+    models = load_model(416)
     win32_capture_Init()
     while True:
         if out_check:
@@ -58,20 +59,27 @@ def lock_target(usb):
         yc = time.time()
         img = win32_capture()
         fps_time = time.time()
-        box_list = interface_img(img, model)  # 这里使用 img
-        tl = time.time()
-        if box_list:
+        box_lists = interface_img(img, models)  # 这里使用 img
+        if box_lists:
+            body_boxes = [box_list for box_list in box_lists if "body" in box_list]
+            target_box_lists = body_boxes if body_boxes else box_lists
+            distances = [((int(box[1] * grab_width + grab_x) - pos_center[0]) ** 2 +
+                          (int(box[2] * grab_height + grab_y) - pos_center[1]) ** 2, i)
+                         for i, box in enumerate(target_box_lists)]
+            min_dist, min_index = heapq.nsmallest(1, distances)[0]
+            tl = time.time()
             print(" 截图延迟 ： {:.2f} ms".format((fps_time - yc) * 1000))
             print(" 推理延迟 ： {:.2f} ms".format((tl - yc) * 1000))
             print(" 总计耗时 ： {:.2f} ms".format(((tl - yc) + (fps_time - yc)) * 1000))
-        dicts = (
-            box_list, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y,
-            offset_pixel_center, conf, flag_lock_obj_both)
-        serialized_data = msgpack.dumps(dicts)
-        usb.put(serialized_data)
+            dicts = (
+                target_box_lists[min_index], out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio,
+                offset_pixel_y,
+                offset_pixel_center, conf, flag_lock_obj_both)
+            serialized_data = msgpack.dumps(dicts)
+            conn1.put(serialized_data)
         if show_monitor == '开启':
-            img = draw_box(img, box_list)
-            img = draw_fps(img, fps_time, box_list)
+            img = draw_box(img, box_lists)
+            img = draw_fps(img, fps_time, box_lists)
             cv2.imshow("game", img)
             hwnd = win32gui.FindWindow(None, "game")
             win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
@@ -85,8 +93,8 @@ def draw_box(img, box_list):
 
     gs = screen_info[2]
     gy = screen_info[2]
-
     for box in box_list:
+        print("box", box)
         x_center = box[1] * gs
         y_center = box[2] * gy
         w = box[3] * gs
@@ -123,7 +131,7 @@ class MainWindows(QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.horizontalSlider.setMinimum(0)
-        self.ui.horizontalSlider.setMaximum(20)
+        self.ui.horizontalSlider.setMaximum(200)
         self.ui.horizontalSlider.setSingleStep(1)
         self.ui.label_12.setText(str(mouses_offset_ratio))
         self.ui.horizontalSlider.valueChanged.connect(self.valueChange_1)
@@ -161,7 +169,7 @@ class MainWindows(QMainWindow):
 
     def valueChange_1(self):
         global mouses_offset_ratio
-        mouses_offset_ratio = round(self.ui.horizontalSlider.value() / 10, 1)
+        mouses_offset_ratio = round(self.ui.horizontalSlider.value() / 100, 2)
         self.ui.label_12.setText(str(mouses_offset_ratio))
 
     def valueChange_2(self):
@@ -209,7 +217,7 @@ class MainWindows(QMainWindow):
         self.boxChange()
 
     def boxChange_3(self):
-        global  flag_lock_obj_both
+        global flag_lock_obj_both
         flag_lock_obj_both = self.ui.checkBox_3.isChecked()
         self.boxChange()
 

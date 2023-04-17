@@ -36,8 +36,8 @@ def milli_sleep(num):
     TimeEndPeriod(1)
 
 
-PIXEL_X = 2825
-PIXEL_Y = 1375
+PIXEL_X = 5650
+PIXEL_Y = 2750
 WIDTH = 2560
 HEIGHT = 1440
 FOV_X = 84

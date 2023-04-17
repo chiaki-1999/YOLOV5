@@ -15,9 +15,15 @@ with open(info_dir, 'r', encoding='utf-8', newline='') as fr:
     screen_size = r['screen_size']
     screen_info = r['screen_info'].replace('(', ',').replace(')', ',').replace(' ', '').split(',')
     screen_info = tuple(map(int, screen_info[3:6]))
+    weights = r['pth_dir']
+    data = r['yaml_dir']
 
 screen_size = screen_size.split('*')
-screen_size = (int(screen_size[0]), int(screen_size[1]))
+grab_size = 416
+screen_width, screen_height = (int(screen_size[0]), int(screen_size[1]))
+grab = (int((screen_width - grab_size) / 2), int((screen_height - grab_size) / 2), grab_size, grab_size)
+grab_x, grab_y, grab_width, grab_height = grab
+pos_center = (int(screen_width / 2), int(screen_height / 2))
 
 
 def get_show_monitor():
