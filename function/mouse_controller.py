@@ -22,10 +22,6 @@ def on_click(x, y, button, pressed):
         mouse_right_click = pressed
 
 
-listener_mouse = mouse.Listener(on_click=on_click)
-listener_mouse.start()
-
-
 def track_target_ratio(target_box, offset_ratio, mouses_offset_ratio):
     offset = int(target_box[4] * grab_height * offset_ratio)
     x = (int(target_box[1] * grab_width + grab_x) - pos_center[0]) * mouses_offset_ratio
@@ -34,6 +30,8 @@ def track_target_ratio(target_box, offset_ratio, mouses_offset_ratio):
 
 
 def usb_control(usb):
+    listener_mouse = mouse.Listener(on_click=on_click)
+    listener_mouse.start()
     while True:
         if not usb.empty():
             zb = time.time()

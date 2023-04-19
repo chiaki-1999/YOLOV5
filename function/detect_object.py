@@ -36,7 +36,6 @@ def interface_img(img, models):
     with torch.no_grad():
         pred = models(im, augment=False, visualize=False)
         pred = non_max_suppression(pred, conf_thres, iou_thres, max_det=max_det)
-
     box_lists = []
     for i, det in enumerate(pred):
         gn = torch.tensor(img.shape)[[1, 0, 1, 0]]
@@ -44,7 +43,7 @@ def interface_img(img, models):
             det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], img.shape).round()
             for *xyxy, conf, cls in reversed(det):
                 xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()
-                line = (models.names[int(cls)], *xywh)
+                line = (int(cls), *xywh)
                 if 0.1 < (xywh[2] / xywh[3]) < 0.9 and xywh[3] < 0.8:
                     box_lists.append(line)
 

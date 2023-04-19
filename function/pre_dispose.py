@@ -1,7 +1,7 @@
 import heapq
+import threading
 import time
 from multiprocessing import Process, get_context
-from threading import Thread
 
 import cv2
 import msgpack
@@ -35,16 +35,21 @@ def show_ui():
 
 
 def mul_thr(usb, img):
-    Thread(target=show_ui).start()
-    Thread(target=img_capture(img)).start()
-    Thread(target=lock_target(usb, img)).start()
+    t1 = threading.Thread(target=show_ui)
+    t1.start()
+
+    t2 = threading.Thread(target=img_capture, args=(img,))
+    t2.start()
+
+    t3 = threading.Thread(target=lock_target, args=(usb, img))
+    t3.start()
 
 
 def run():
     ctx = get_context('spawn')
     usb = ctx.Queue()
     img = ctx.Queue()
-    Process(target=mul_thr, args=(usb, img)).start()
+    Process(target=mul_thr, args=(usb, img,)).start()
     Process(target=usb_control, args=(usb,)).start()
 
 
@@ -53,6 +58,7 @@ show_monitor = get_show_monitor()
 
 def lock_target(conn1, conn2):
     global show_monitor, out_check
+    print("推理开始 ")
     models = load_model(416)
     while True:
         if out_check:
@@ -63,7 +69,7 @@ def lock_target(conn1, conn2):
         fps_time = time.time()
         box_lists = interface_img(img, models)  # 这里使用 img
         if box_lists:
-            body_boxes = [box_list for box_list in box_lists if "body" in box_list]
+            body_boxes = [box_list for box_list in box_lists if 0 in box_list]
             target_box_lists = body_boxes if body_boxes else box_lists
             distances = [((int(box[1] * grab_width + grab_x) - pos_center[0]) ** 2 +
                           (int(box[2] * grab_height + grab_y) - pos_center[1]) ** 2, i)
@@ -90,13 +96,13 @@ def lock_target(conn1, conn2):
 def img_capture(conn2):
     global show_monitor, out_check
     win32_capture_Init()
+    print("截图开始 ")
     while True:
         if out_check:
             break
-    yc = time.time()
-    conn2.put(win32_capture())
-    time.sleep(0.002)
-    print(" 截图延迟 ： {:.2f} ms".format((time.time() - yc) * 1000))
+        conn2.put(win32_capture())
+        time.sleep(0.003)
+
 
 def draw_box(img, box_list):
     if not box_list:
