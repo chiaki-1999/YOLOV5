@@ -54,34 +54,3 @@ def VFOV(input_y):
     y = (HEIGHT / 2) / math.tan((FOV_Y * math.pi) / 180 / 2)
     return (math.atan(input_y / y)) * (PIXEL_Y / math.pi)
 
-
-class PIDController:
-    def __init__(self, Kp, Ki, Kd):
-        self.Kp = Kp
-        self.Ki = Ki
-        self.Kd = Kd
-        self.last_error = 0
-        self.integral = 0
-
-    def reset(self):
-        self.last_error = 0
-        self.integral = 0
-
-    def update_pid(self, Kp=None, Ki=None, Kd=None):
-        if Kp is not None:
-            self.Kp = Kp
-        if Ki is not None:
-            self.Ki = Ki
-        if Kd is not None:
-            self.Kd = Kd
-
-    def compute(self, point, current_value, dt):
-        error = point - current_value
-        self.integral += error * dt
-        derivative = (error - self.last_error) / dt
-        output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-        self.last_error = error
-        return output
-
-
-# pid实例

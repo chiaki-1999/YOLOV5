@@ -34,30 +34,32 @@ def show_ui():
     app.exec_()
 
 
-def mul_thr(usb):
+def mul_thr(usb, img):
     Thread(target=show_ui).start()
-    Thread(target=lock_target(usb)).start()
+    Thread(target=img_capture(img)).start()
+    Thread(target=lock_target(usb, img)).start()
 
 
 def run():
     ctx = get_context('spawn')
     usb = ctx.Queue()
-    Process(target=mul_thr, args=(usb,)).start()
+    img = ctx.Queue()
+    Process(target=mul_thr, args=(usb, img)).start()
     Process(target=usb_control, args=(usb,)).start()
 
 
 show_monitor = get_show_monitor()
 
 
-def lock_target(conn1):
+def lock_target(conn1, conn2):
     global show_monitor, out_check
     models = load_model(416)
-    win32_capture_Init()
     while True:
         if out_check:
             break
-        yc = time.time()
-        img = win32_capture()
+        if conn2.empty() is True:
+            continue
+        img = conn2.get()
         fps_time = time.time()
         box_lists = interface_img(img, models)  # 这里使用 img
         if box_lists:
@@ -68,24 +70,33 @@ def lock_target(conn1):
                          for i, box in enumerate(target_box_lists)]
             min_dist, min_index = heapq.nsmallest(1, distances)[0]
             tl = time.time()
-            print(" 截图延迟 ： {:.2f} ms".format((fps_time - yc) * 1000))
-            print(" 推理延迟 ： {:.2f} ms".format((tl - yc) * 1000))
-            print(" 总计耗时 ： {:.2f} ms".format(((tl - yc) + (fps_time - yc)) * 1000))
+            print(" 推理延迟 ： {:.2f} ms".format((tl - fps_time) * 1000))
             dicts = (
                 target_box_lists[min_index], out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio,
                 offset_pixel_y,
-                offset_pixel_center, conf, flag_lock_obj_both)
+                offset_pixel_center, conf)
             serialized_data = msgpack.dumps(dicts)
             conn1.put(serialized_data)
-        if show_monitor == '开启':
-            img = draw_box(img, box_lists)
-            img = draw_fps(img, fps_time, box_lists)
-            cv2.imshow("game", img)
-            hwnd = win32gui.FindWindow(None, "game")
-            win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                  win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-            cv2.waitKey(1)
+            if show_monitor == '开启':
+                img = draw_box(img, box_lists)
+                img = draw_fps(img, fps_time, box_lists)
+                cv2.imshow("game", img)
+                hwnd = win32gui.FindWindow(None, "game")
+                win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                      win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+                cv2.waitKey(1)
 
+
+def img_capture(conn2):
+    global show_monitor, out_check
+    win32_capture_Init()
+    while True:
+        if out_check:
+            break
+    yc = time.time()
+    conn2.put(win32_capture())
+    time.sleep(0.002)
+    print(" 截图延迟 ： {:.2f} ms".format((time.time() - yc) * 1000))
 
 def draw_box(img, box_list):
     if not box_list:

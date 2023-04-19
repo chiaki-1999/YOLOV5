@@ -11,30 +11,7 @@ from util import HFOV, VFOV
 mouse_x, mouse_y = mouse.Controller().position
 mouse_left_click = False
 mouse_right_click = False
-auto_fire = False
-
-flag_lock_obj_left, flag_lock_obj_right = False, False
-offset_pixel_center = 0.7
-conf = 0.05
-kd = 0
 flag_lock_obj_both = False
-
-
-def get_last_item(usb):
-    last_item = None
-    while not usb.empty():
-        last_item = usb.get()
-    return last_item
-
-
-# 定义被屏蔽的按键列表
-BLOCKED_KEYS = ['w', 'a', 's', 'd']
-
-
-def block_wasd(e: keyboard.KeyboardEvent) -> bool:
-    if e.name in BLOCKED_KEYS:
-        return False
-    return True
 
 
 def on_click(x, y, button, pressed):
@@ -43,49 +20,31 @@ def on_click(x, y, button, pressed):
         mouse_left_click = pressed
     elif button == mouse.Button.right:
         mouse_right_click = pressed
-        print("mouse_right_click  ", pressed)
-        if mouse_right_click and flag_lock_obj_both:
-            print(" 禁用wasd ")
-            keyboard.on_press(block_wasd)
-        else:
-            print(" 释放wasd ")
-            keyboard.unhook_all()
+
+
+listener_mouse = mouse.Listener(on_click=on_click)
+listener_mouse.start()
 
 
 def track_target_ratio(target_box, offset_ratio, mouses_offset_ratio):
-    global auto_fire
     offset = int(target_box[4] * grab_height * offset_ratio)
     x = (int(target_box[1] * grab_width + grab_x) - pos_center[0]) * mouses_offset_ratio
-    x = HFOV(x)
     y = (int(target_box[2] * grab_height + grab_y) - pos_center[1] - offset) * mouses_offset_ratio
-    x = HFOV(x)
-    y = VFOV(y)
-    auto_fire = abs(x) <= 5 and abs(y) <= 8
-    print(" auto_fire ", auto_fire)
-    print(" KP ", offset_pixel_center, "kd", conf)
-    return x, y, 1
+    return HFOV(x), VFOV(y), 1
 
 
 def usb_control(usb):
-    global flag_lock_obj_left, flag_lock_obj_right, offset_pixel_center, conf, flag_lock_obj_both
-    listener_mouse = mouse.Listener(on_click=on_click)
-    listener_mouse.start()
     while True:
-        zb = time.time()
-        if usb.empty() is True:
-            continue
-        serialized_data = get_last_item(usb)
-        dicts = msgpack.loads(serialized_data)
-        box_list, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y, \
-            offset_pixel_center, conf, flag_lock_obj_both = dicts
-        if out_check:
-            break
-        if not box_list:
-            continue
-        pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, offset_pixel_y, mouses_offset_ratio)
-        if ((mouse_left_click and flag_lock_obj_left)
-            or (mouse_right_click and flag_lock_obj_right)) \
-                and has_target:
-            Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
-        print("计算坐标: {:.2f} ms".format((time.time() - zb) * 1000))
-    keyboard.unhook_all()
+        if not usb.empty():
+            zb = time.time()
+            serialized_data = usb.get()
+            box_list, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y, \
+                offset_pixel_center, conf = msgpack.loads(serialized_data)
+            if out_check:
+                break
+            if not box_list:
+                continue
+            pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, offset_pixel_y, mouses_offset_ratio)
+            if mouse_left_click and flag_lock_obj_left or mouse_right_click and flag_lock_obj_right and has_target:
+                Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
+            print("计算坐标: {:.2f} ms".format((time.time() - zb) * 1000))
