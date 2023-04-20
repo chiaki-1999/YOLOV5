@@ -10,11 +10,10 @@ import win32con
 import win32gui
 import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow
-
 from SecondUI import Ui_MainWindow
 from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture, win32_capture_Init
-from function.mouse_controller import usb_control
+from function.mouse_controller import usb_control, mouse_listener
 from function.readini import screen_info, get_show_monitor, grab_width, grab_x, pos_center, grab_y, grab_height
 
 mouses_offset_ratio = 1.4
@@ -24,7 +23,7 @@ flag_lock_obj_right = False
 offset_pixel_center = 1
 offset_pixel_y = 0.3
 out_check = 0
-conf = 0.04
+conf = 5
 
 
 def show_ui():
@@ -51,52 +50,59 @@ show_monitor = get_show_monitor()
 
 
 def lock_target(conn):
-    global show_monitor, out_check
-    print("推理开始 ")
+    global show_monitor, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y, conf
+    mouse_listener()
     models = load_model(416)
-    while True:
-        if out_check:
-            break
+    while not out_check:
         if not conn.empty():
             img = conn.get()
             fps_time = time.time()
             box_lists = interface_img(img, models)  # 这里使用 img
             if box_lists:
-                body_boxes = [box_list for box_list in box_lists if 0 in box_list]
-                target_box_lists = body_boxes if body_boxes else box_lists
-                distances = [((int(box[1] * grab_width + grab_x) - pos_center[0]) ** 2 +
-                              (int(box[2] * grab_height + grab_y) - pos_center[1]) ** 2, i)
-                             for i, box in enumerate(target_box_lists)]
-                min_dist, min_index = heapq.nsmallest(1, distances)[0]
-                tl = time.time()
-                print(" 推理延迟 ： {:.2f} ms".format((tl - fps_time) * 1000))
-                dicts = (
-                    target_box_lists[min_index], out_check, flag_lock_obj_left, flag_lock_obj_right,
-                    mouses_offset_ratio,
-                    offset_pixel_y,
-                    offset_pixel_center, conf)
-                usb_control(dicts)
+                target_box_lists = get_target_box_lists(box_lists)
+                min_index = get_closest_target_index(target_box_lists)
+                print(" 推理延迟 ： {:.2f} ms".format((time.time() - fps_time) * 1000))
+                target_box_lists[min_index], flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, \
+                    offset_pixel_y, conf = serialized_data
+                usb_control(serialized_data)
+                print(" 处理完成 ： {:.2f} ms".format((time.time() - fps_time) * 1000))
                 if show_monitor == '开启':
-                    img = draw_box(img, box_lists)
-                    img = draw_fps(img, fps_time, box_lists)
-                    cv2.imshow("game", img)
-                    hwnd = win32gui.FindWindow(None, "game")
-                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-                    cv2.waitKey(1)
+                    show_img(img, box_lists, fps_time)
     conn.clear()
 
 
+def get_target_box_lists(box_lists):
+    body_boxes = [box_list for box_list in box_lists if 0 in box_list]
+    return body_boxes if body_boxes else box_lists
+
+
+def get_closest_target_index(target_box_lists):
+    distances = [((int(box[1] * grab_width + grab_x) - pos_center[0]) ** 2 +
+                  (int(box[2] * grab_height + grab_y) - pos_center[1]) ** 2, i)
+                 for i, box in enumerate(target_box_lists)]
+    return heapq.nsmallest(1, distances)[0][1]
+
+
+def show_img(img, box_lists, fps_time):
+        img = draw_box(img, box_lists)
+        img = draw_fps(img, fps_time, box_lists)
+        cv2.imshow("game", img)
+        hwnd = win32gui.FindWindow(None, "game")
+        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+        cv2.waitKey(1)
+
+
 def img_capture(conn2):
-    global show_monitor, out_check
+    global out_check
     win32_capture_Init()
-    print("截图开始 ")
-    while True:
-        if out_check:
-            break
-        conn2.put(win32_capture())
-        time.sleep(0.003)
-    conn2.clear()
+    while not out_check:
+        if conn2.empty():
+            t = time.time()
+            img = win32_capture()
+            conn2.put(img)
+            print(f"截图延迟：{((time.time() - t) * 1000):.2f} ms")
+    conn2.close()
 
 
 def draw_box(img, box_list):
@@ -199,7 +205,7 @@ class MainWindows(QMainWindow):
 
     def valueChange_5(self):
         global conf
-        conf = round(self.ui.horizontalSlider_5.value() / 100, 2)
+        conf = round(self.ui.horizontalSlider_5.value())
         self.ui.label_20.setText(str(conf))
 
     def boxChange(self):
