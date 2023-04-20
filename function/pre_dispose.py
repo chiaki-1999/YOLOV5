@@ -1,7 +1,7 @@
 import heapq
 import threading
 import time
-from multiprocessing import Process, get_context
+from multiprocessing import get_context, Process
 
 import cv2
 import msgpack
@@ -10,40 +10,49 @@ import win32con
 import win32gui
 import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow
+from pynput import mouse
+
 from SecondUI import Ui_MainWindow
 from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture, win32_capture_Init
-from function.mouse_controller import usb_control, mouse_listener
+from function.mouse.mouse import Mouse
+from function.mouse_controller import track_target_ratio
 from function.readini import screen_info, get_show_monitor, grab_width, grab_x, pos_center, grab_y, grab_height
 
-mouses_offset_ratio = 1.4
+mouse_left_click, mouse_right_click = False, False
+mouses_offset_ratio = 0.8
 flag_lock_obj_both = False
 flag_lock_obj_left = False
 flag_lock_obj_right = False
 offset_pixel_center = 1
-offset_pixel_y = 0.3
+offset_pixel_y = 0.25
 out_check = 0
 conf = 5
 
 
 def show_ui():
-    app = QApplication.instance() or QApplication([])
+    app = QApplication([])
     windows = MainWindows()
     windows.show()
     app.exec_()
 
 
+def mul_thr(queue):
+    t1 = threading.Thread(target=show_ui)
+    t1.start()
+    print(" ui 启动")
+    t2 = threading.Thread(target=img_capture, args=(queue,))
+    t2.start()
+    print("截图启动")
+    t3 = threading.Thread(target=lock_target, args=(queue,))
+    t3.start()
+    print("推理启动..")
+
+
 def run():
     ctx = get_context('spawn')
     queue = ctx.Queue()
-    t1 = threading.Thread(target=show_ui)
-    t1.start()
-
-    t2 = threading.Thread(target=img_capture, args=(queue,))
-    t2.start()
-
-    t3 = threading.Thread(target=lock_target, args=(queue,))
-    t3.start()
+    Process(target=mul_thr, args=(queue,)).start()
 
 
 show_monitor = get_show_monitor()
@@ -62,13 +71,31 @@ def lock_target(conn):
                 target_box_lists = get_target_box_lists(box_lists)
                 min_index = get_closest_target_index(target_box_lists)
                 print(" 推理延迟 ： {:.2f} ms".format((time.time() - fps_time) * 1000))
-                target_box_lists[min_index], flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, \
-                    offset_pixel_y, conf = serialized_data
+                serialized_data = msgpack.dumps(target_box_lists[min_index])
                 usb_control(serialized_data)
                 print(" 处理完成 ： {:.2f} ms".format((time.time() - fps_time) * 1000))
                 if show_monitor == '开启':
                     show_img(img, box_lists, fps_time)
-    conn.clear()
+
+
+def usb_control(box_list):
+    box_list = msgpack.loads(box_list)
+    pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, offset_pixel_y, mouses_offset_ratio)
+    if mouse_left_click and flag_lock_obj_left or mouse_right_click and flag_lock_obj_right and has_target:
+        Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
+
+
+def on_click(x, y, button, pressed):
+    global mouse_left_click, mouse_right_click
+    if button == mouse.Button.left:
+        mouse_left_click = pressed
+    elif button == mouse.Button.right:
+        mouse_right_click = pressed
+
+
+def mouse_listener():
+    listener_mouse = mouse.Listener(on_click=on_click)
+    listener_mouse.start()
 
 
 def get_target_box_lists(box_lists):
@@ -84,24 +111,23 @@ def get_closest_target_index(target_box_lists):
 
 
 def show_img(img, box_lists, fps_time):
-        img = draw_box(img, box_lists)
-        img = draw_fps(img, fps_time, box_lists)
-        cv2.imshow("game", img)
-        hwnd = win32gui.FindWindow(None, "game")
-        win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                              win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-        cv2.waitKey(1)
+    img = draw_box(img, box_lists)
+    img = draw_fps(img, fps_time, box_lists)
+    cv2.imshow("game", img)
+    hwnd = win32gui.FindWindow(None, "game")
+    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+    cv2.waitKey(1)
 
 
 def img_capture(conn2):
     global out_check
     win32_capture_Init()
+    print("截图初始化完成..... ")
     while not out_check:
         if conn2.empty():
-            t = time.time()
             img = win32_capture()
             conn2.put(img)
-            print(f"截图延迟：{((time.time() - t) * 1000):.2f} ms")
     conn2.close()
 
 
