@@ -28,69 +28,63 @@ conf = 0.04
 
 
 def show_ui():
-    app = QApplication([])
+    app = QApplication.instance() or QApplication([])
     windows = MainWindows()
     windows.show()
     app.exec_()
 
 
-def mul_thr(usb, img):
+def run():
+    ctx = get_context('spawn')
+    queue = ctx.Queue()
     t1 = threading.Thread(target=show_ui)
     t1.start()
 
-    t2 = threading.Thread(target=img_capture, args=(img,))
+    t2 = threading.Thread(target=img_capture, args=(queue,))
     t2.start()
 
-    t3 = threading.Thread(target=lock_target, args=(usb, img))
+    t3 = threading.Thread(target=lock_target, args=(queue,))
     t3.start()
-
-
-def run():
-    ctx = get_context('spawn')
-    usb = ctx.Queue()
-    img = ctx.Queue()
-    Process(target=mul_thr, args=(usb, img,)).start()
-    Process(target=usb_control, args=(usb,)).start()
 
 
 show_monitor = get_show_monitor()
 
 
-def lock_target(conn1, conn2):
+def lock_target(conn):
     global show_monitor, out_check
     print("推理开始 ")
     models = load_model(416)
     while True:
         if out_check:
             break
-        if conn2.empty() is True:
-            continue
-        img = conn2.get()
-        fps_time = time.time()
-        box_lists = interface_img(img, models)  # 这里使用 img
-        if box_lists:
-            body_boxes = [box_list for box_list in box_lists if 0 in box_list]
-            target_box_lists = body_boxes if body_boxes else box_lists
-            distances = [((int(box[1] * grab_width + grab_x) - pos_center[0]) ** 2 +
-                          (int(box[2] * grab_height + grab_y) - pos_center[1]) ** 2, i)
-                         for i, box in enumerate(target_box_lists)]
-            min_dist, min_index = heapq.nsmallest(1, distances)[0]
-            tl = time.time()
-            print(" 推理延迟 ： {:.2f} ms".format((tl - fps_time) * 1000))
-            dicts = (
-                target_box_lists[min_index], out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio,
-                offset_pixel_y,
-                offset_pixel_center, conf)
-            serialized_data = msgpack.dumps(dicts)
-            conn1.put(serialized_data)
-            if show_monitor == '开启':
-                img = draw_box(img, box_lists)
-                img = draw_fps(img, fps_time, box_lists)
-                cv2.imshow("game", img)
-                hwnd = win32gui.FindWindow(None, "game")
-                win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
-                                      win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
-                cv2.waitKey(1)
+        if not conn.empty():
+            img = conn.get()
+            fps_time = time.time()
+            box_lists = interface_img(img, models)  # 这里使用 img
+            if box_lists:
+                body_boxes = [box_list for box_list in box_lists if 0 in box_list]
+                target_box_lists = body_boxes if body_boxes else box_lists
+                distances = [((int(box[1] * grab_width + grab_x) - pos_center[0]) ** 2 +
+                              (int(box[2] * grab_height + grab_y) - pos_center[1]) ** 2, i)
+                             for i, box in enumerate(target_box_lists)]
+                min_dist, min_index = heapq.nsmallest(1, distances)[0]
+                tl = time.time()
+                print(" 推理延迟 ： {:.2f} ms".format((tl - fps_time) * 1000))
+                dicts = (
+                    target_box_lists[min_index], out_check, flag_lock_obj_left, flag_lock_obj_right,
+                    mouses_offset_ratio,
+                    offset_pixel_y,
+                    offset_pixel_center, conf)
+                usb_control(dicts)
+                if show_monitor == '开启':
+                    img = draw_box(img, box_lists)
+                    img = draw_fps(img, fps_time, box_lists)
+                    cv2.imshow("game", img)
+                    hwnd = win32gui.FindWindow(None, "game")
+                    win32gui.SetWindowPos(hwnd, win32con.HWND_TOPMOST, 0, 0, 0, 0,
+                                          win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
+                    cv2.waitKey(1)
+    conn.clear()
 
 
 def img_capture(conn2):
@@ -102,6 +96,7 @@ def img_capture(conn2):
             break
         conn2.put(win32_capture())
         time.sleep(0.003)
+    conn2.clear()
 
 
 def draw_box(img, box_list):

@@ -29,20 +29,14 @@ def track_target_ratio(target_box, offset_ratio, mouses_offset_ratio):
     return HFOV(x), VFOV(y), 1
 
 
-def usb_control(usb):
-    listener_mouse = mouse.Listener(on_click=on_click)
-    listener_mouse.start()
-    while True:
-        if not usb.empty():
-            zb = time.time()
-            serialized_data = usb.get()
-            box_list, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y, \
-                offset_pixel_center, conf = msgpack.loads(serialized_data)
-            if out_check:
-                break
-            if not box_list:
-                continue
-            pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, offset_pixel_y, mouses_offset_ratio)
-            if mouse_left_click and flag_lock_obj_left or mouse_right_click and flag_lock_obj_right and has_target:
-                Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
-            print("计算坐标: {:.2f} ms".format((time.time() - zb) * 1000))
+def usb_control(serialized_data):
+    box_list, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y, \
+        offset_pixel_center, conf = serialized_data
+    pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, offset_pixel_y, mouses_offset_ratio)
+    if mouse_left_click and flag_lock_obj_left or mouse_right_click and flag_lock_obj_right and has_target:
+        Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
+    print("计算坐标: {:.2f} ms".format((time.time() - zb) * 1000))
+
+
+listener_mouse = mouse.Listener(on_click=on_click)
+listener_mouse.start()
