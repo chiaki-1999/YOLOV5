@@ -11,25 +11,26 @@ import win32gui
 import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from pynput import mouse
-
+from util import PID
 from SecondUI import Ui_MainWindow
 from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture, win32_capture_Init
 from function.mouse.mouse import Mouse
-from function.readini import screen_info, get_show_monitor, pos_center
+from function.readini import screen_info, get_show_monitor, pos_center ,grab
 
 pos_center_w, pos_center_h = pos_center
 grab_x, grab_y, grab_width, grab_height = grab
 mouse_left_click, mouse_right_click = False, False
-mouses_offset_ratio = 0.8
+mouses_offset_ratio = 0.8 #瞄准速度
+offset_pixel_y = 0.25    #瞄准百分比 0%是中心
+out_check = 0   #退出标识
 flag_lock_obj_both = False
 flag_lock_obj_left = False
 flag_lock_obj_right = False
-offset_pixel_center = 1
-offset_pixel_y = 0.25
-out_check = 0
-conf = 5
 
+
+kp = 1  #kp
+ki = 0.01  #ki
 
 def show_ui():
     app = QApplication([])
@@ -64,7 +65,7 @@ show_monitor = get_show_monitor()
 
 
 def lock_target(conn, conn2):
-    global show_monitor, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y, conf
+    global show_monitor, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y
     models = load_model(416)
     while not out_check:
         if not conn.empty():
@@ -80,6 +81,9 @@ def lock_target(conn, conn2):
                     show_img(img, box_lists, fps_time)
 
 
+body_pid_x = PID(0, kp, ki, 0)
+
+
 def usb_control(conn2):
     mouse_listener()
     while not out_check:
@@ -93,12 +97,12 @@ def usb_control(conn2):
                 print(" 处理完成 ： {:.2f} ms".format((time.time() - t) * 1000))
 
 
-
 def track_target_ratio(target_box):
     offset = int(target_box[4] * grab_height * offset_pixel_y)
-    x = (int(target_box[1] * grab_width + grab_x) - pos_center_w) * mouses_offset_ratio
-    y = (int(target_box[2] * grab_height + grab_y) - pos_center_h - offset) * mouses_offset_ratio
-    return HFOV(x), VFOV(y), 1
+    x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w) * mouses_offset_ratio)
+    y = OVF_new((int(target_box[2] * grab_height + grab_y) - pos_center_h - offset) * mouses_offset_ratio)
+    return body_pid_x.cmd_pid(x), y, 1
+
 
 def on_click(x, y, button, pressed):
     global mouse_left_click, mouse_right_click
@@ -184,7 +188,7 @@ def draw_fps(img, fps_time, fps_list):
 class MainWindows(QMainWindow):
 
     def __init__(self):
-        global mouses_offset_ratio, offset_pixel_center, offset_pixel_y, conf
+        global mouses_offset_ratio, kp, offset_pixel_y, ki
         super(MainWindows, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -196,9 +200,9 @@ class MainWindows(QMainWindow):
         self.ui.horizontalSlider.valueChanged.connect(self.valueChange_1)
 
         self.ui.horizontalSlider_2.setMinimum(0)
-        self.ui.horizontalSlider_2.setMaximum(10)
+        self.ui.horizontalSlider_2.setMaximum(100)
         self.ui.horizontalSlider_2.setSingleStep(1)
-        self.ui.label_13.setText(str(offset_pixel_center))
+        self.ui.label_13.setText(str(kp))
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
 
         self.ui.horizontalSlider_3.setMinimum(0)
@@ -217,7 +221,7 @@ class MainWindows(QMainWindow):
         self.ui.horizontalSlider_5.setMinimum(0)
         self.ui.horizontalSlider_5.setMaximum(100)
         self.ui.horizontalSlider_5.setSingleStep(1)
-        self.ui.label_20.setText(str(conf))
+        self.ui.label_20.setText(str(ki))
         self.ui.horizontalSlider_5.valueChanged.connect(self.valueChange_5)
 
         self.ui.checkBox.stateChanged.connect(self.boxChange_1)
@@ -232,9 +236,9 @@ class MainWindows(QMainWindow):
         self.ui.label_12.setText(str(mouses_offset_ratio))
 
     def valueChange_2(self):
-        global offset_pixel_center
-        offset_pixel_center = round(self.ui.horizontalSlider_2.value() / 10, 1)
-        self.ui.label_13.setText(str(offset_pixel_center))
+        global kp
+        kp = round(self.ui.horizontalSlider_2.value() / 10, 1)
+        self.ui.label_13.setText(str(kp))
 
     def valueChange_3(self):
         global offset_pixel_y
@@ -245,9 +249,9 @@ class MainWindows(QMainWindow):
         self.ui.label_19.setText(str(0))
 
     def valueChange_5(self):
-        global conf
-        conf = round(self.ui.horizontalSlider_5.value())
-        self.ui.label_20.setText(str(conf))
+        global ki
+        ki = round(self.ui.horizontalSlider_5.value() / 100, 2)
+        self.ui.label_20.setText(str(ki))
 
     def boxChange(self):
         global flag_lock_obj_left, flag_lock_obj_right, flag_lock_obj_both
