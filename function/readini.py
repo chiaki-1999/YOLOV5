@@ -22,7 +22,6 @@ screen_size = screen_size.split('*')
 grab_size = 416
 screen_width, screen_height = (int(screen_size[0]), int(screen_size[1]))
 grab = (int((screen_width - grab_size) / 2), int((screen_height - grab_size) / 2), grab_size, grab_size)
-grab_x, grab_y, grab_width, grab_height = grab
 pos_center = (int(screen_width / 2), int(screen_height / 2))
 
 

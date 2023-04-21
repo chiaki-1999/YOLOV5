@@ -16,9 +16,10 @@ from SecondUI import Ui_MainWindow
 from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture, win32_capture_Init
 from function.mouse.mouse import Mouse
-from function.mouse_controller import track_target_ratio
-from function.readini import screen_info, get_show_monitor, grab_width, grab_x, pos_center, grab_y, grab_height
+from function.readini import screen_info, get_show_monitor, pos_center
 
+pos_center_w, pos_center_h = pos_center
+grab_x, grab_y, grab_width, grab_height = grab
 mouse_left_click, mouse_right_click = False, False
 mouses_offset_ratio = 0.8
 flag_lock_obj_both = False
@@ -37,30 +38,33 @@ def show_ui():
     app.exec_()
 
 
-def mul_thr(queue):
+def mul_thr(queue, queue2):
     t1 = threading.Thread(target=show_ui)
     t1.start()
     print(" ui 启动")
     t2 = threading.Thread(target=img_capture, args=(queue,))
     t2.start()
     print("截图启动")
-    t3 = threading.Thread(target=lock_target, args=(queue,))
+    t3 = threading.Thread(target=lock_target, args=(queue, queue2,))
     t3.start()
     print("推理启动..")
+    t4 = threading.Thread(target=usb_control, args=(queue2,))
+    t4.start()
+    print("鼠标瞄准启动..")
 
 
 def run():
     ctx = get_context('spawn')
     queue = ctx.Queue()
-    Process(target=mul_thr, args=(queue,)).start()
+    queue2 = ctx.Queue()
+    Process(target=mul_thr, args=(queue, queue2,)).start()
 
 
 show_monitor = get_show_monitor()
 
 
-def lock_target(conn):
+def lock_target(conn, conn2):
     global show_monitor, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y, conf
-    mouse_listener()
     models = load_model(416)
     while not out_check:
         if not conn.empty():
@@ -71,19 +75,30 @@ def lock_target(conn):
                 target_box_lists = get_target_box_lists(box_lists)
                 min_index = get_closest_target_index(target_box_lists)
                 print(" 推理延迟 ： {:.2f} ms".format((time.time() - fps_time) * 1000))
-                serialized_data = msgpack.dumps(target_box_lists[min_index])
-                usb_control(serialized_data)
-                print(" 处理完成 ： {:.2f} ms".format((time.time() - fps_time) * 1000))
+                conn2.put(target_box_lists[min_index])
                 if show_monitor == '开启':
                     show_img(img, box_lists, fps_time)
 
 
-def usb_control(box_list):
-    box_list = msgpack.loads(box_list)
-    pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, offset_pixel_y, mouses_offset_ratio)
-    if mouse_left_click and flag_lock_obj_left or mouse_right_click and flag_lock_obj_right and has_target:
-        Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
+def usb_control(conn2):
+    mouse_listener()
+    while not out_check:
+        if not conn2.empty():
+            t = time.time()
+            box_list = conn.get()
+            box_list = msgpack.loads(box_list)
+            pos_min_x, pos_min_y, has_target = track_target_ratio(box_list)
+            if mouse_left_click and flag_lock_obj_left or mouse_right_click and flag_lock_obj_right and has_target:
+                Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
+                print(" 处理完成 ： {:.2f} ms".format((time.time() - t) * 1000))
 
+
+
+def track_target_ratio(target_box):
+    offset = int(target_box[4] * grab_height * offset_pixel_y)
+    x = (int(target_box[1] * grab_width + grab_x) - pos_center_w) * mouses_offset_ratio
+    y = (int(target_box[2] * grab_height + grab_y) - pos_center_h - offset) * mouses_offset_ratio
+    return HFOV(x), VFOV(y), 1
 
 def on_click(x, y, button, pressed):
     global mouse_left_click, mouse_right_click
@@ -104,8 +119,8 @@ def get_target_box_lists(box_lists):
 
 
 def get_closest_target_index(target_box_lists):
-    distances = [((int(box[1] * grab_width + grab_x) - pos_center[0]) ** 2 +
-                  (int(box[2] * grab_height + grab_y) - pos_center[1]) ** 2, i)
+    distances = [((int(box[1] * grab_width + grab_x) - pos_center_w) ** 2 +
+                  (int(box[2] * grab_height + grab_y) - pos_center_h) ** 2, i)
                  for i, box in enumerate(target_box_lists)]
     return heapq.nsmallest(1, distances)[0][1]
 
