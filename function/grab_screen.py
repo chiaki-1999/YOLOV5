@@ -4,27 +4,22 @@ import win32gui
 import win32print
 
 from function.readini import screen_info
-from function.win32截图速度测试 import Capture
+from function.win32capture import capture
 
 gx, gy, gs = screen_info
-WindowName = ['CrossFire', 'Apex']
+WindowName = ['CrossFire', 'Apex Legends']
 hwnd = 0
-
-Cp = Capture()
 
 
 def win32_capture_Init():
     global hwnd
     for name in WindowName:
-        handle = win32gui.FindWindow(None, name)
+        handle = win32gui.FindWindow(name, None)
         if handle:
+            print(" handle ", handle)
             hwnd = handle
             break
-    Cp.InitEx(hwnd, gx, gy, gs, gs)
-
-
-def win32_capture():
-    return Cp.capture()
+    return capture(gx, gy, gs, gs, hwnd)
 
 
 ###获取真实的分辨率

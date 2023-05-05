@@ -1,36 +1,36 @@
 import heapq
+import math
 import threading
 import time
 from multiprocessing import get_context, Process
 
 import cv2
-import msgpack
 import numpy as np
 import win32con
 import win32gui
 import winsound
 from PyQt5.QtWidgets import QApplication, QMainWindow
 from pynput import mouse
-from util import PID
+
 from SecondUI import Ui_MainWindow
 from function.detect_object import load_model, interface_img
-from function.grab_screen import win32_capture, win32_capture_Init
+from function.grab_screen import win32_capture_Init
 from function.mouse.mouse import Mouse
-from function.readini import screen_info, get_show_monitor, pos_center ,grab
+from function.readini import screen_info, get_show_monitor, pos_center, grab
+from util import HOV_new
 
-pos_center_w, pos_center_h = pos_center
+pos_center_w, pos_center_h = pos_center[0], pos_center[1]
 grab_x, grab_y, grab_width, grab_height = grab
 mouse_left_click, mouse_right_click = False, False
-mouses_offset_ratio = 0.8 #瞄准速度
-offset_pixel_y = 0.25    #瞄准百分比 0%是中心
-out_check = 0   #退出标识
-flag_lock_obj_both = False
+mouses_offset_ratio = 3  # 瞄准速度
+offset_pixel_y = 0.25  # 瞄准百分比 0%是中心
+out_check = 0  # 退出标识
 flag_lock_obj_left = False
 flag_lock_obj_right = False
+PID_switch = False
+kp = 1
+ki = 0
 
-
-kp = 1  #kp
-ki = 0.01  #ki
 
 def show_ui():
     app = QApplication([])
@@ -39,69 +39,55 @@ def show_ui():
     app.exec_()
 
 
-def mul_thr(queue, queue2):
+def mul_thr():
     t1 = threading.Thread(target=show_ui)
     t1.start()
-    print(" ui 启动")
-    t2 = threading.Thread(target=img_capture, args=(queue,))
-    t2.start()
     print("截图启动")
-    t3 = threading.Thread(target=lock_target, args=(queue, queue2,))
+    t3 = threading.Thread(target=lock_target)
     t3.start()
-    print("推理启动..")
-    t4 = threading.Thread(target=usb_control, args=(queue2,))
-    t4.start()
-    print("鼠标瞄准启动..")
 
 
 def run():
-    ctx = get_context('spawn')
-    queue = ctx.Queue()
-    queue2 = ctx.Queue()
-    Process(target=mul_thr, args=(queue, queue2,)).start()
+    Process(target=mul_thr, args=()).start()
 
 
 show_monitor = get_show_monitor()
 
 
-def lock_target(conn, conn2):
-    global show_monitor, out_check, flag_lock_obj_left, flag_lock_obj_right, mouses_offset_ratio, offset_pixel_y
+def lock_target():
+    global show_monitor, out_check
     models = load_model(416)
-    while not out_check:
-        if not conn.empty():
-            img = conn.get()
-            fps_time = time.time()
-            box_lists = interface_img(img, models)  # 这里使用 img
-            if box_lists:
-                target_box_lists = get_target_box_lists(box_lists)
-                min_index = get_closest_target_index(target_box_lists)
-                print(" 推理延迟 ： {:.2f} ms".format((time.time() - fps_time) * 1000))
-                conn2.put(target_box_lists[min_index])
-                if show_monitor == '开启':
-                    show_img(img, box_lists, fps_time)
-
-
-body_pid_x = PID(0, kp, ki, 0)
-
-
-def usb_control(conn2):
+    Cp = win32_capture_Init()
     mouse_listener()
     while not out_check:
-        if not conn2.empty():
-            t = time.time()
-            box_list = conn.get()
-            box_list = msgpack.loads(box_list)
-            pos_min_x, pos_min_y, has_target = track_target_ratio(box_list)
-            if mouse_left_click and flag_lock_obj_left or mouse_right_click and flag_lock_obj_right and has_target:
-                Mouse.mouse.move(int(pos_min_x), int(pos_min_y))
-                print(" 处理完成 ： {:.2f} ms".format((time.time() - t) * 1000))
+        fps_time = time.time()
+        img = Cp.cap()
+        box_lists = interface_img(img, models)  # 这里使用 img
+        if box_lists:
+            target_box_lists = get_target_box_lists(box_lists)
+            min_index = get_closest_target_index(target_box_lists)
+            usb_control(target_box_lists[min_index], fps_time)
+        if show_monitor == '开启':
+            show_img(img, box_lists, fps_time)
 
 
-def track_target_ratio(target_box):
+def usb_control(box_list, dt):
+    pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, dt)
+    if (mouse_left_click and flag_lock_obj_left) or (mouse_right_click and flag_lock_obj_right):
+        if has_target:
+            Mouse.mouse.move(int(pos_min_x * kp), int(pos_min_y * kp))
+
+
+def track_target_ratio(target_box, dt):
+    x_dt = ((time.time() - dt) * 1000)
     offset = int(target_box[4] * grab_height * offset_pixel_y)
-    x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w) * mouses_offset_ratio)
-    y = OVF_new((int(target_box[2] * grab_height + grab_y) - pos_center_h - offset) * mouses_offset_ratio)
-    return body_pid_x.cmd_pid(x), y, 1
+    x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w))
+    y = (int(target_box[2] * grab_height + grab_y) - pos_center_h - offset)
+    if abs(x) >= 5:
+        symbol = math.copysign(1, x)
+        x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
+        x = x + x_compensate
+    return x, y, 1
 
 
 def on_click(x, y, button, pressed):
@@ -139,25 +125,12 @@ def show_img(img, box_lists, fps_time):
     cv2.waitKey(1)
 
 
-def img_capture(conn2):
-    global out_check
-    win32_capture_Init()
-    print("截图初始化完成..... ")
-    while not out_check:
-        if conn2.empty():
-            img = win32_capture()
-            conn2.put(img)
-    conn2.close()
-
-
 def draw_box(img, box_list):
     if not box_list:
         return img
-
     gs = screen_info[2]
     gy = screen_info[2]
     for box in box_list:
-        print("box", box)
         x_center = box[1] * gs
         y_center = box[2] * gy
         w = box[3] * gs
@@ -194,13 +167,13 @@ class MainWindows(QMainWindow):
         self.ui.setupUi(self)
 
         self.ui.horizontalSlider.setMinimum(0)
-        self.ui.horizontalSlider.setMaximum(200)
+        self.ui.horizontalSlider.setMaximum(60)
         self.ui.horizontalSlider.setSingleStep(1)
         self.ui.label_12.setText(str(mouses_offset_ratio))
         self.ui.horizontalSlider.valueChanged.connect(self.valueChange_1)
 
         self.ui.horizontalSlider_2.setMinimum(0)
-        self.ui.horizontalSlider_2.setMaximum(100)
+        self.ui.horizontalSlider_2.setMaximum(10)
         self.ui.horizontalSlider_2.setSingleStep(1)
         self.ui.label_13.setText(str(kp))
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
@@ -232,7 +205,7 @@ class MainWindows(QMainWindow):
 
     def valueChange_1(self):
         global mouses_offset_ratio
-        mouses_offset_ratio = round(self.ui.horizontalSlider.value() / 100, 2)
+        mouses_offset_ratio = round(self.ui.horizontalSlider.value() / 10, 1)
         self.ui.label_12.setText(str(mouses_offset_ratio))
 
     def valueChange_2(self):
@@ -254,9 +227,9 @@ class MainWindows(QMainWindow):
         self.ui.label_20.setText(str(ki))
 
     def boxChange(self):
-        global flag_lock_obj_left, flag_lock_obj_right, flag_lock_obj_both
-        if flag_lock_obj_both:
-            self.ui.label_2.setText('启动状态自动开火')
+        global flag_lock_obj_left, flag_lock_obj_right, PID_switch
+        if PID_switch:
+            self.ui.label_2.setText('使用PID')
         else:
             if flag_lock_obj_left:
                 if flag_lock_obj_right:
@@ -280,8 +253,8 @@ class MainWindows(QMainWindow):
         self.boxChange()
 
     def boxChange_3(self):
-        global flag_lock_obj_both
-        flag_lock_obj_both = self.ui.checkBox_3.isChecked()
+        global PID_switch
+        PID_switch = self.ui.checkBox_3.isChecked()
         self.boxChange()
 
     def outPush(self):
