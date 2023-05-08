@@ -17,7 +17,7 @@ from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture_Init
 from function.mouse.mouse import Mouse
 from function.readini import screen_info, get_show_monitor, pos_center, grab
-from util import HOV_new
+from util import HOV_new, OVF_new
 
 pos_center_w, pos_center_h = pos_center[0], pos_center[1]
 grab_x, grab_y, grab_width, grab_height = grab
@@ -30,6 +30,7 @@ flag_lock_obj_right = False
 PID_switch = False
 kp = 1
 ki = 0
+fire = False
 
 
 def show_ui():
@@ -42,7 +43,8 @@ def show_ui():
 def mul_thr():
     t1 = threading.Thread(target=show_ui)
     t1.start()
-    print("截图启动")
+    t1 = threading.Thread(target=auto_fire)
+    t1.start()
     t3 = threading.Thread(target=lock_target)
     t3.start()
 
@@ -82,12 +84,18 @@ def track_target_ratio(target_box, dt):
     x_dt = ((time.time() - dt) * 1000)
     offset = int(target_box[4] * grab_height * offset_pixel_y)
     x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w))
-    y = (int(target_box[2] * grab_height + grab_y) - pos_center_h - offset)
-    if abs(x) >= 5:
+    y = OVF_new((int(target_box[2] * grab_height + grab_y) - pos_center_h - offset))
+    if abs(x) >= 10:
         symbol = math.copysign(1, x)
         x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
         x = x + x_compensate
     return x, y, 1
+
+
+def auto_fire():
+    while True:
+        if fire:
+            pass
 
 
 def on_click(x, y, button, pressed):
@@ -179,7 +187,7 @@ class MainWindows(QMainWindow):
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
 
         self.ui.horizontalSlider_3.setMinimum(0)
-        self.ui.horizontalSlider_3.setMaximum(40)
+        self.ui.horizontalSlider_3.setMaximum(50)
         self.ui.horizontalSlider_3.setSingleStep(1)
         self.ui.label_14.setText(str(offset_pixel_y))
         self.ui.horizontalSlider_3.valueChanged.connect(self.valueChange_3)
