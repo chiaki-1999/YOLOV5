@@ -100,7 +100,10 @@ def auto_fire():
     global fire, auto_fire_switch
     while True:
         if fire and auto_fire_switch:
-            Mouse.mouse.click(1)
+            Mouse.mouse.press(1)
+            milli_sleep(random.uniform(0.03, 0.04))
+            Mouse.mouse.release(1)
+            milli_sleep(random.uniform(0.03, 0.05))
             fire = False
 
 

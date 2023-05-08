@@ -48,6 +48,6 @@ def interface_img(img, models):
     return box_lists
 
 
-conf_thres = 0.65
+conf_thres = 0.45
 iou_thres = 0.45
 max_det = 1000
