@@ -36,9 +36,9 @@ class Mouse:
         def click(code):
             if ok:
                 driver.mouse_down(code)
-                milli_sleep(numpy.random.uniform(0.015, 0.03))
+                milli_sleep(random.uniform(0.015, 0.03))
                 driver.mouse_up(code)
-                milli_sleep(numpy.random.uniform(0.015, 0.03))
+                milli_sleep(random.uniform(0.015, 0.03))
 
         @staticmethod
         def scroll(a):

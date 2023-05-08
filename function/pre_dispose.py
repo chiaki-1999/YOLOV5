@@ -27,7 +27,7 @@ offset_pixel_y = 0.25  # 瞄准百分比 0%是中心
 out_check = 0  # 退出标识
 flag_lock_obj_left = False
 flag_lock_obj_right = False
-PID_switch = False
+auto_fire_switch = False
 kp = 1
 ki = 0
 fire = False
@@ -81,10 +81,14 @@ def usb_control(box_list, dt):
 
 
 def track_target_ratio(target_box, dt):
+    global fire
     x_dt = ((time.time() - dt) * 1000)
     offset = int(target_box[4] * grab_height * offset_pixel_y)
     x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w))
     y = OVF_new((int(target_box[2] * grab_height + grab_y) - pos_center_h - offset))
+    if abs(x) <= 3 and abs(y) <= 3:
+        fire = True
+    # 移动补偿
     if abs(x) >= 10:
         symbol = math.copysign(1, x)
         x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
@@ -93,9 +97,11 @@ def track_target_ratio(target_box, dt):
 
 
 def auto_fire():
+    global fire, auto_fire_switch
     while True:
-        if fire:
-            pass
+        if fire and auto_fire_switch:
+            Mouse.mouse.click(1)
+            fire = False
 
 
 def on_click(x, y, button, pressed):
@@ -235,8 +241,8 @@ class MainWindows(QMainWindow):
         self.ui.label_20.setText(str(ki))
 
     def boxChange(self):
-        global flag_lock_obj_left, flag_lock_obj_right, PID_switch
-        if PID_switch:
+        global flag_lock_obj_left, flag_lock_obj_right, auto_fire_switch
+        if auto_fire_switch:
             self.ui.label_2.setText('使用PID')
         else:
             if flag_lock_obj_left:
@@ -261,8 +267,8 @@ class MainWindows(QMainWindow):
         self.boxChange()
 
     def boxChange_3(self):
-        global PID_switch
-        PID_switch = self.ui.checkBox_3.isChecked()
+        global auto_fire_switch
+        auto_fire_switch = self.ui.checkBox_3.isChecked()
         self.boxChange()
 
     def outPush(self):
