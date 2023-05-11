@@ -1,6 +1,7 @@
 import ctypes
 import logging
 import os
+import random
 
 import numpy
 
@@ -48,7 +49,6 @@ class Mouse:
         @staticmethod
         def move(x, y):
             if ok and x != 0 and y != 0:
-                print(" x :", x, " y", y)
                 driver.moveR(x, y)
 
     class keyboard:

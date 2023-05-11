@@ -1,8 +1,9 @@
 import heapq
 import math
+import random
 import threading
 import time
-from multiprocessing import get_context, Process
+from multiprocessing import Process
 
 import cv2
 import numpy as np
@@ -17,20 +18,21 @@ from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture_Init
 from function.mouse.mouse import Mouse
 from function.readini import screen_info, get_show_monitor, pos_center, grab
-from util import HOV_new, OVF_new
+from util import HOV_new, milli_sleep
 
 pos_center_w, pos_center_h = pos_center[0], pos_center[1]
 grab_x, grab_y, grab_width, grab_height = grab
 mouse_left_click, mouse_right_click = False, False
-mouses_offset_ratio = 3  # 瞄准速度
-offset_pixel_y = 0.25  # 瞄准百分比 0%是中心
+mouses_offset_ratio = 2.3  # 瞄准速度
+offset_pixel_y = 0.26  # 瞄准百分比 0%是中心
 out_check = 0  # 退出标识
 flag_lock_obj_left = False
 flag_lock_obj_right = False
 auto_fire_switch = False
-kp = 1
+kp = 0.58
 ki = 0
 fire = False
+internal_fire = True
 
 
 def show_ui():
@@ -43,10 +45,10 @@ def show_ui():
 def mul_thr():
     t1 = threading.Thread(target=show_ui)
     t1.start()
-    t1 = threading.Thread(target=auto_fire)
-    t1.start()
     t3 = threading.Thread(target=lock_target)
     t3.start()
+    t2 = threading.Thread(target=auto_fire)
+    t2.start()
 
 
 def run():
@@ -60,7 +62,6 @@ def lock_target():
     global show_monitor, out_check
     models = load_model(416)
     Cp = win32_capture_Init()
-    mouse_listener()
     while not out_check:
         fps_time = time.time()
         img = Cp.cap()
@@ -74,36 +75,38 @@ def lock_target():
 
 
 def usb_control(box_list, dt):
+    global fire
     pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, dt)
     if (mouse_left_click and flag_lock_obj_left) or (mouse_right_click and flag_lock_obj_right):
-        if has_target:
-            Mouse.mouse.move(int(pos_min_x * kp), int(pos_min_y * kp))
+        fire = has_target
+        Mouse.mouse.move(int(pos_min_x * kp), int(pos_min_y * kp))
 
 
 def track_target_ratio(target_box, dt):
-    global fire
+    global fire, internal_fire
     x_dt = ((time.time() - dt) * 1000)
     offset = int(target_box[4] * grab_height * offset_pixel_y)
     x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w))
-    y = OVF_new((int(target_box[2] * grab_height + grab_y) - pos_center_h - offset))
-    if abs(x) <= 3 and abs(y) <= 3:
-        fire = True
+    y = int(target_box[2] * grab_height + grab_y) - pos_center_h - offset
+    internal_fire = (abs(x) <= 3 and abs(y) <= 6)
     # 移动补偿
     if abs(x) >= 10:
         symbol = math.copysign(1, x)
         x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
         x = x + x_compensate
-    return x, y, 1
+    return x, y, internal_fire
 
 
 def auto_fire():
     global fire, auto_fire_switch
-    while True:
+    mouse_listener()
+    while not out_check:
+        time.sleep(random.uniform(0.01, 0.02))
         if fire and auto_fire_switch:
             Mouse.mouse.press(1)
-            milli_sleep(random.uniform(0.03, 0.04))
+            time.sleep(random.uniform(0.04, 0.07))
             Mouse.mouse.release(1)
-            milli_sleep(random.uniform(0.03, 0.05))
+            time.sleep(random.uniform(0.05, 0.08))
             fire = False
 
 
