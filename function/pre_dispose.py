@@ -72,10 +72,10 @@ def lock_target():
             min_index = get_closest_target_index(target_box_lists)
             usb_control(target_box_lists[min_index], fps_time)
         yd_time = time.time() - tl_time
-        if show_monitor == '开启':
-            show_img(img, box_lists, fps_time)
         print("截图时间： {:.2f} ms   推理时间： {:.2f} ms   移动时间： {:.2f} ms   循环时间推理时间： {:.2f} ms".format(
             jt_time * 1000, tl_time * 1000, yd_time * 1000  , (time.time() - fps_time) * 1000))
+        if show_monitor == '开启':
+            show_img(img, box_lists, fps_time)
 
 
 def usb_control(box_list, dt):
