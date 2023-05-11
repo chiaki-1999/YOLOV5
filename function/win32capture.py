@@ -1,55 +1,24 @@
-import ctypes
-import cv2
 import numpy as np
-from ctypes.wintypes import DWORD, LONG, WORD
+import cv2
+import win32gui
+import win32ui
+import win32con
 
 
-class BITMAPINFOHEADER(ctypes.Structure):
-    _fields_ = [
-        ("biSize", DWORD),
-        ("biWidth", LONG),
-        ("biHeight", LONG),
-        ("biPlanes", WORD),
-        ("biBitCount", WORD),
-        ("biCompression", DWORD),
-        ("biSizeImage", DWORD),
-        ("biXPelsPerMeter", LONG),
-        ("biYPelsPerMeter", LONG),
-        ("biClrUsed", DWORD),
-        ("biClrImportant", DWORD),
-    ]
-
-
-class BITMAPINFO(ctypes.Structure):
-    _fields_ = [("bmiHeader", BITMAPINFOHEADER), ("bmiColors", DWORD * 3)]
-
-
-Gdi32 = ctypes.windll.gdi32
-User32 = ctypes.windll.user32
-
-
-class capture:
-
+class ScreenCapture:
     def __init__(self, x, y, width, height, hwnd):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.srcdc = User32.GetDC(hwnd)
-        self.memdc = Gdi32.CreateCompatibleDC(self.srcdc)
-        self.bmi = BITMAPINFO()
-        self.bmi.bmiHeader.biSize = ctypes.sizeof(BITMAPINFOHEADER)
-        self.bmi.bmiHeader.biPlanes = 1
-        self.bmi.bmiHeader.biBitCount = 32
-        self.bmi.bmiHeader.biWidth = width
-        self.bmi.bmiHeader.biHeight = -height
-        self._data = ctypes.create_string_buffer(width * height * 4)
-        self.bmp = Gdi32.CreateCompatibleBitmap(self.srcdc, width, height)
-        Gdi32.SelectObject(self.memdc, self.bmp)
+        self.rect = (x, y, x + width, y + height)
+        self.hwnd = hwnd
 
-    def cap(self):
-        Gdi32.BitBlt(self.memdc, 0, 0, self.width, self.height, self.srcdc, self.x, self.y, 0x00CC0020)
-        Gdi32.GetDIBits(self.memdc, self.bmp, 0, self.height, self._data, self.bmi, 0)
-        self.p = np.frombuffer(self._data, dtype='uint8').reshape(self.height, self.width, 4)
-        Gdi32.DeleteObject(self.bmp)
-        return cv2.cvtColor(self.p, cv2.COLOR_BGRA2BGR)
+    def capture(self):
+        srcdc = win32ui.CreateDCFromHandle(win32gui.GetDC(self.hwnd))
+        memdc = srcdc.CreateCompatibleDC()
+        bmp = win32ui.CreateBitmap()
+        bmp.CreateCompatibleBitmap(srcdc, self.rect[2] - self.rect[0], self.rect[3] - self.rect[1])
+        memdc.SelectObject(bmp)
+        memdc.BitBlt((0, 0), (self.rect[2] - self.rect[0], self.rect[3] - self.rect[1]), srcdc, self.rect,
+                     win32con.SRCCOPY)
+        bmpstr = bmp.GetBitmapBits(True)
+        img = np.frombuffer(bmpstr, dtype=np.uint8).reshape(
+            (self.rect[3] - self.rect[1], self.rect[2] - self.rect[0], 4))[:, :, :3].astype(np.uint8)
+        return cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

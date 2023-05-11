@@ -59,18 +59,23 @@ show_monitor = get_show_monitor()
 def lock_target():
     global show_monitor, out_check
     models = load_model(416)
-    Cp = win32_capture_Init()
+    cp = win32_capture_Init()
     mouse_listener()
     while not out_check:
         fps_time = time.time()
-        img = Cp.cap()
+        img = cp.capture()
+        jt_time = time.time() - fps_time
         box_lists = interface_img(img, models)  # 这里使用 img
+        tl_time = time.time() - jt_time
         if box_lists:
             target_box_lists = get_target_box_lists(box_lists)
             min_index = get_closest_target_index(target_box_lists)
             usb_control(target_box_lists[min_index], fps_time)
+        yd_time = time.time() - tl_time
         if show_monitor == '开启':
             show_img(img, box_lists, fps_time)
+        print("截图时间： {:.2f} ms   推理时间： {:.2f} ms   移动时间： {:.2f} ms   循环时间推理时间： {:.2f} ms".format(
+            jt_time * 1000, tl_time * 1000, yd_time * 1000  , (time.time() - fps_time) * 1000))
 
 
 def usb_control(box_list, dt):

@@ -14,7 +14,7 @@ def win32_capture_Init():
     for name in WindowName:
         handle = win32gui.FindWindow(name, None)
         if handle:
-            return capture(gx, gy, gs, gs, handle)
+            return ScreenCapture(gx, gy, gs, gs, handle)
 
 
 ###获取真实的分辨率
