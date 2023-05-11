@@ -68,9 +68,7 @@ def lock_target():
         box_lists = interface_img(img, models)  # 这里使用 img
         tl_time = time.time() - jt_time
         if box_lists:
-            target_box_lists = get_target_box_lists(box_lists)
-            min_index = get_closest_target_index(target_box_lists)
-            usb_control(target_box_lists[min_index], fps_time)
+            usb_control(get_closest_target_index(box_lists), fps_time)
         yd_time = time.time() - tl_time
         print("截图时间： {:.2f} ms   推理时间： {:.2f} ms   移动时间： {:.2f} ms   循环时间推理时间： {:.2f} ms".format(
             jt_time * 1000, tl_time * 1000, yd_time * 1000  , (time.time() - fps_time) * 1000))
@@ -125,16 +123,15 @@ def mouse_listener():
     listener_mouse.start()
 
 
-def get_target_box_lists(box_lists):
+def get_closest_target_index(box_lists):
     body_boxes = [box_list for box_list in box_lists if 0 in box_list]
-    return body_boxes if body_boxes else box_lists
+    body_boxes = body_boxes if body_boxes else box_lists
+    boxes = np.array(body_boxes)
+    centers = (boxes[:, 1:3] + boxes[:, 3:5]) / 2
+    distances = np.sum(np.square(centers - np.array([pos_center_w, pos_center_h])), axis=1)
+    closest_index = np.argmin(distances)
+    return body_boxes[closest_index]
 
-
-def get_closest_target_index(target_box_lists):
-    distances = [((int(box[1] * grab_width + grab_x) - pos_center_w) ** 2 +
-                  (int(box[2] * grab_height + grab_y) - pos_center_h) ** 2, i)
-                 for i, box in enumerate(target_box_lists)]
-    return heapq.nsmallest(1, distances)[0][1]
 
 
 def show_img(img, box_lists, fps_time):
