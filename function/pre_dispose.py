@@ -88,15 +88,27 @@ def track_target_ratio(target_box, dt):
     x_dt = ((time.time() - dt) * 1000)
     offset = int(target_box[4] * grab_height * offset_pixel_y)
     x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w))
-    y = OVF_new((int(target_box[2] * grab_height + grab_y) - pos_center_h - offset))
-    if abs(x) <= 3 and abs(y) <= 3:
-        fire = True
+    y = int(target_box[2] * grab_height + grab_y) - pos_center_h - offset
+    abs_x, abs_y = abs(x), abs(y)
     # 移动补偿
-    if abs(x) >= 10:
+    if abs_x >= 10:
         symbol = math.copysign(1, x)
         x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
-        x = x + x_compensate
-    return x, y, 1
+        x += x_compensate
+    return x, y, abs_x <= 3 and abs_y <= 3
+
+def get_closest_target_index(box_lists):
+    body_boxes = [box_list for box_list in box_lists if 0 in box_list]
+    if body_boxes:
+        boxes = np.array(body_boxes)
+    else:
+        boxes = np.array(box_lists)
+    centers = (boxes[:, 1:3] + boxes[:, 3:5]) / 2
+    target_center = np.array([pos_center_w, pos_center_h])
+    distances = np.sum(np.square(centers - target_center), axis=1)
+    closest_index = np.argmin(distances)
+    return body_boxes[closest_index] if body_boxes else box_lists[closest_index]
+
 
 
 def auto_fire():
@@ -123,14 +135,7 @@ def mouse_listener():
     listener_mouse.start()
 
 
-def get_closest_target_index(box_lists):
-    body_boxes = [box_list for box_list in box_lists if 0 in box_list]
-    body_boxes = body_boxes if body_boxes else box_lists
-    boxes = np.array(body_boxes)
-    centers = (boxes[:, 1:3] + boxes[:, 3:5]) / 2
-    distances = np.sum(np.square(centers - np.array([pos_center_w, pos_center_h])), axis=1)
-    closest_index = np.argmin(distances)
-    return body_boxes[closest_index]
+
 
 
 
