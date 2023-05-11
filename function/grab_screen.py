@@ -4,7 +4,7 @@ import win32gui
 import win32print
 
 from function.readini import screen_info
-from function.win32capture import capture
+from function.win32capture import ScreenCapture
 
 gx, gy, gs = screen_info
 WindowName = ['CrossFire', 'Apex Legends']
@@ -14,9 +14,7 @@ def win32_capture_Init():
     for name in WindowName:
         handle = win32gui.FindWindow(name, None)
         if handle:
-            return capture(gx, gy, gs, gs, handle)
-        else:
-            pass
+            return ScreenCapture(gx, gy, gs, gs, handle)
 
 
 ###获取真实的分辨率

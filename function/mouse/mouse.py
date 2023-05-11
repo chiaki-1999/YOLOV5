@@ -3,8 +3,6 @@ import logging
 import os
 import random
 
-import numpy
-
 from util import milli_sleep
 
 log = logging.getLogger(__name__)

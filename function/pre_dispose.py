@@ -1,4 +1,3 @@
-import heapq
 import math
 import random
 import threading
@@ -18,21 +17,20 @@ from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture_Init
 from function.mouse.mouse import Mouse
 from function.readini import screen_info, get_show_monitor, pos_center, grab
-from util import HOV_new, milli_sleep
+from util import HOV_new
 
 pos_center_w, pos_center_h = pos_center[0], pos_center[1]
 grab_x, grab_y, grab_width, grab_height = grab
 mouse_left_click, mouse_right_click = False, False
-mouses_offset_ratio = 2.3  # 瞄准速度
-offset_pixel_y = 0.26  # 瞄准百分比 0%是中心
+mouses_offset_ratio = 2  # 瞄准速度
+offset_pixel_y = 0.25  # 瞄准百分比 0%是中心
 out_check = 0  # 退出标识
 flag_lock_obj_left = False
 flag_lock_obj_right = False
 auto_fire_switch = False
-kp = 0.58
+speed = 0.75
 ki = 0
 fire = False
-internal_fire = True
 
 
 def show_ui():
@@ -45,10 +43,10 @@ def show_ui():
 def mul_thr():
     t1 = threading.Thread(target=show_ui)
     t1.start()
+    t1 = threading.Thread(target=auto_fire)
+    t1.start()
     t3 = threading.Thread(target=lock_target)
     t3.start()
-    t2 = threading.Thread(target=auto_fire)
-    t2.start()
 
 
 def run():
@@ -61,15 +59,20 @@ show_monitor = get_show_monitor()
 def lock_target():
     global show_monitor, out_check
     models = load_model(416)
-    Cp = win32_capture_Init()
+    cp = win32_capture_Init()
+    mouse_listener()
     while not out_check:
         fps_time = time.time()
-        img = Cp.cap()
+        img = cp.cap()
+        jt_time = time.time()
         box_lists = interface_img(img, models)  # 这里使用 img
+        tl_time = time.time()
         if box_lists:
-            target_box_lists = get_target_box_lists(box_lists)
-            min_index = get_closest_target_index(target_box_lists)
-            usb_control(target_box_lists[min_index], fps_time)
+            usb_control(get_closest_target_index(box_lists), fps_time)
+        yd_time = time.time()
+        print("截图时间： {:.2f} ms   推理时间： {:.2f} ms   移动时间： {:.2f} ms   循环时间推理时间： {:.2f} ms".format(
+            (jt_time - fps_time) * 1000, (tl_time - jt_time) * 1000, (yd_time - tl_time) * 1000,
+            (time.time() - fps_time) * 1000))
         if show_monitor == '开启':
             show_img(img, box_lists, fps_time)
 
@@ -78,23 +81,36 @@ def usb_control(box_list, dt):
     global fire
     pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, dt)
     if (mouse_left_click and flag_lock_obj_left) or (mouse_right_click and flag_lock_obj_right):
-        fire = has_target
-        Mouse.mouse.move(int(pos_min_x * kp), int(pos_min_y * kp))
+        if has_target:
+            fire = True
+        Mouse.mouse.move(int(pos_min_x * speed), int(pos_min_y * speed))
 
 
 def track_target_ratio(target_box, dt):
-    global fire, internal_fire
     x_dt = ((time.time() - dt) * 1000)
     offset = int(target_box[4] * grab_height * offset_pixel_y)
     x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w))
     y = int(target_box[2] * grab_height + grab_y) - pos_center_h - offset
-    internal_fire = (abs(x) <= 3 and abs(y) <= 6)
+    abs_x, abs_y = abs(x), abs(y)
     # 移动补偿
-    if abs(x) >= 10:
+    if abs_x >= 10:
         symbol = math.copysign(1, x)
         x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
-        x = x + x_compensate
-    return x, y, internal_fire
+        x += x_compensate
+    return x, y, abs_x <= 3 and abs_y <= 3
+
+
+def get_closest_target_index(box_lists):
+    body_boxes = [box_list for box_list in box_lists if 0 in box_list]
+    if body_boxes:
+        boxes = np.array(body_boxes)
+    else:
+        boxes = np.array(box_lists)
+    centers = (boxes[:, 1:3] + boxes[:, 3:5]) / 2
+    target_center = np.array([pos_center_w, pos_center_h])
+    distances = np.sum(np.square(centers - target_center), axis=1)
+    closest_index = np.argmin(distances)
+    return body_boxes[closest_index] if body_boxes else box_lists[closest_index]
 
 
 def auto_fire():
@@ -121,18 +137,6 @@ def on_click(x, y, button, pressed):
 def mouse_listener():
     listener_mouse = mouse.Listener(on_click=on_click)
     listener_mouse.start()
-
-
-def get_target_box_lists(box_lists):
-    body_boxes = [box_list for box_list in box_lists if 0 in box_list]
-    return body_boxes if body_boxes else box_lists
-
-
-def get_closest_target_index(target_box_lists):
-    distances = [((int(box[1] * grab_width + grab_x) - pos_center_w) ** 2 +
-                  (int(box[2] * grab_height + grab_y) - pos_center_h) ** 2, i)
-                 for i, box in enumerate(target_box_lists)]
-    return heapq.nsmallest(1, distances)[0][1]
 
 
 def show_img(img, box_lists, fps_time):
@@ -181,7 +185,7 @@ def draw_fps(img, fps_time, fps_list):
 class MainWindows(QMainWindow):
 
     def __init__(self):
-        global mouses_offset_ratio, kp, offset_pixel_y, ki
+        global mouses_offset_ratio, speed, offset_pixel_y, ki
         super(MainWindows, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -193,9 +197,9 @@ class MainWindows(QMainWindow):
         self.ui.horizontalSlider.valueChanged.connect(self.valueChange_1)
 
         self.ui.horizontalSlider_2.setMinimum(0)
-        self.ui.horizontalSlider_2.setMaximum(10)
+        self.ui.horizontalSlider_2.setMaximum(30)
         self.ui.horizontalSlider_2.setSingleStep(1)
-        self.ui.label_13.setText(str(kp))
+        self.ui.label_13.setText(str(speed))
         self.ui.horizontalSlider_2.valueChanged.connect(self.valueChange_2)
 
         self.ui.horizontalSlider_3.setMinimum(0)
@@ -229,9 +233,9 @@ class MainWindows(QMainWindow):
         self.ui.label_12.setText(str(mouses_offset_ratio))
 
     def valueChange_2(self):
-        global kp
-        kp = round(self.ui.horizontalSlider_2.value() / 10, 1)
-        self.ui.label_13.setText(str(kp))
+        global speed
+        speed = round(self.ui.horizontalSlider_2.value() / 10, 1)
+        self.ui.label_13.setText(str(speed))
 
     def valueChange_3(self):
         global offset_pixel_y
