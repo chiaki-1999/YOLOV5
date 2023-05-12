@@ -93,7 +93,6 @@ class PID(object):
         # Derivative term
         derivative = self.Kd * (error - self.last_error) / dt
         self.last_error = error
-
         # Calculate output
         output = p + self.integral + derivative
         return output
