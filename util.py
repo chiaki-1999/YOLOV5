@@ -44,13 +44,13 @@ def calc_angle_pixels(sub_s, fov, pixels, size, w_h):
     convert_mobile_pixels = rotation_angle * unit_angle_pixels
     return convert_mobile_pixels
 
-PIXEL_X = 3022
-#PIXEL_X = 5650
+# PIXEL_X = 3022
+PIXEL_X = 5650
 PIXEL_Y = 2750
 WIDTH = 2560
 HEIGHT = 1440
-#FOV_X = 84
-FOV_X = 114
+FOV_X = 84
+# FOV_X = 114
 FOV_Y = 53
 
 
@@ -74,88 +74,38 @@ def VFOV(input_y):
 
 
 class PID(object):
-    def __init__(self, P: float, I: float, D: float):
-        self.Kp = P
-        self.Ki = I
-        self.Kd = D
+    def __init__(self, kp, ki, kd, imax):
+        self.Kp = kp
+        self.Ki = ki
+        self.Kd = kd
+        self.imax = imax
+        self.integral = 0
+        self.last_error = 0
 
-        self.PIDOutput = 0.0  # PID控制器输出
-        self.SystemOutput = 0.0  # 系统输出值
-        self.LastSystemOutput = 0.0  # 系统的上一次输出
+    def cmd_pid(self, error, dt):
+        # Proportional term
+        p = self.Kp * error
 
-        self.Error = 0.0
-        self.LastError = 0.0
-        self.LastLastError = 0.0
+        # Integral term
+        self.integral += self.Ki * error * dt
+        self.integral = max(min(self.integral, self.imax), -self.imax)
 
-    # 设置PID控制器参数
-    def cmd_pid(self, sub_s):
-        self.Error = sub_s - self.SystemOutput
-        # 计算增量
-        IncrementalValue = self.Kp * (self.Error - self.LastError) \
-                           + self.Ki * self.Error + self.Kd * (self.Error - 2 * self.LastError + self.LastLastError)
-        # 计算输出
-        self.PIDOutput += IncrementalValue
-        self.LastLastError = self.LastError
-        self.LastError = self.Error
-        return self.PIDOutput
+        # Derivative term
+        derivative = self.Kd * (error - self.last_error) / dt
+        self.last_error = error
 
-    def update(self, P: float, I: float):
-        self.Kp = P
-        self.Ki = I
-
-    def resetting(self):
-        self.PIDOutput = 0.0  # PID控制器输出
-        self.SystemOutput = 0.0  # 系统输出值
-        self.LastSystemOutput = 0.0  # 系统的上一次输出
-
-        self.Error = 0.0
-        self.LastError = 0.0
-        self.LastLastError = 0.0
-
-
-class PID_1:
-    def __init__(self, dt, max, min, Kp, Ki, Kd):
-        self.dt = dt  # 循环时长
-        self.max = max  # 操作变量最大值
-        self.min = min  # 操作变量最小值
-        self.Kp = Kp  # 比例增益
-        self.Kd = Kd  # 积分增益
-        self.Ki = Ki  # 微分增益
-        self.integral = 0  # 直到上一次的误差值
-        self.pre_error = 0  # 上一次的误差值
-
-    def calculate(self, setPoint, pv):
-        # 其中 pv:process value 即过程值
-        error = setPoint - pv  # 误差
-        Pout = self.Kp * error  # 比例项
-        self.integral += error * self.dt
-        Inout = self.Ki * self.integral  # 积分项
-        derivative = (error - self.pre_error) / self.dt
-        Doubt = self.Kd * derivative  # 微分项
-
-        output = Pout + Inout + Doubt  # 新的目标值
-
-        if output > self.max:
-            output = self.max
-        elif output < self.min:
-            output = self.min
-
-        self.pre_error = error  # 保存本次误差，以供下次计算
+        # Calculate output
+        output = p + self.integral + derivative
         return output
 
-    def apex_pid_x(self, val_x, ts_x):  # 计算次数
-        # x方向PID数据
-        dt_x, x_max, x_min, Kp_x, Kd_x, Ki_x = self.dt, self.max, self.min, self.Kp, self.Kd, self.Ki
-        c_x = PID_1(dt_x, x_max, x_min, Kp_x, Kd_x, Ki_x)
-        val_x = val_x  # 填鼠标偏移量
-        ts_x = ts_x  # 推理次数
-        z_x = 0
-        # x的PID推理过程
-        for x in range(ts_x):
-            inc_x = c_x.calculate(0, val_x)
-            z_x -= inc_x
-        return z_x
+    def clear(self):
+        self.integral = 0
+        self.last_error = 0
 
-    def resetting(self):
-        self.integral = 0  # 直到上一次的误差值
-        self.pre_error = 0  # 上一次的误差值
+    def update_params(self, kp=None, ki=None, kd=None):
+        if kp is not None:
+            self.Kp = kp
+        if ki is not None:
+            self.Ki = ki
+        if kd is not None:
+            self.Kd = kd

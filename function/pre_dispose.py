@@ -22,7 +22,7 @@ from util import HOV_new
 pos_center_w, pos_center_h = pos_center[0], pos_center[1]
 grab_x, grab_y, grab_width, grab_height = grab
 mouse_left_click, mouse_right_click = False, False
-mouses_offset_ratio = 2  # 瞄准速度
+mouses_offset_ratio = 1  # 瞄准速度
 offset_pixel_y = 0.25  # 瞄准百分比 0%是中心
 out_check = 0  # 退出标识
 flag_lock_obj_left = False
@@ -81,8 +81,7 @@ def usb_control(box_list, dt):
     global fire
     pos_min_x, pos_min_y, has_target = track_target_ratio(box_list, dt)
     if (mouse_left_click and flag_lock_obj_left) or (mouse_right_click and flag_lock_obj_right):
-        if has_target:
-            fire = True
+        fire = has_target
         Mouse.mouse.move(int(pos_min_x * speed), int(pos_min_y * speed))
 
 
@@ -97,7 +96,7 @@ def track_target_ratio(target_box, dt):
         symbol = math.copysign(1, x)
         x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
         x += x_compensate
-    return x, y, abs_x <= 3 and abs_y <= 3
+    return x, y, (abs_x <= 4 and abs_y <= 4)
 
 
 def get_closest_target_index(box_lists):
@@ -117,7 +116,7 @@ def auto_fire():
     global fire, auto_fire_switch
     mouse_listener()
     while not out_check:
-        time.sleep(random.uniform(0.01, 0.02))
+        time.sleep(random.uniform(0.01))
         if fire and auto_fire_switch:
             Mouse.mouse.press(1)
             time.sleep(random.uniform(0.04, 0.07))
