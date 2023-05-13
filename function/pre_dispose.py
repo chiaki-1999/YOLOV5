@@ -17,19 +17,20 @@ from function.detect_object import load_model, interface_img
 from function.grab_screen import win32_capture_Init
 from function.mouse.mouse import Mouse
 from function.readini import screen_info, get_show_monitor, pos_center, grab
-from util import HOV_new
+from util import HOV_new, PID
 
 pos_center_w, pos_center_h = pos_center[0], pos_center[1]
 grab_x, grab_y, grab_width, grab_height = grab
 mouse_left_click, mouse_right_click = False, False
 mouses_offset_ratio = 1  # 瞄准速度
-offset_pixel_y = 0.25  # 瞄准百分比 0%是中心
+offset_pixel_y = 0.28  # 瞄准百分比 0%是中心
 out_check = 0  # 退出标识
 flag_lock_obj_left = False
 flag_lock_obj_right = False
 auto_fire_switch = False
-speed = 0.75
-ki = 0
+speed = 0.95
+kp = 1
+ki = 0.02
 fire = False
 
 
@@ -85,18 +86,22 @@ def usb_control(box_list, dt):
         Mouse.mouse.move(int(pos_min_x * speed), int(pos_min_y * speed))
 
 
+pid = PID(0.5, 0.02, 0.01, 20)
+
+
 def track_target_ratio(target_box, dt):
     x_dt = ((time.time() - dt) * 1000)
     offset = int(target_box[4] * grab_height * offset_pixel_y)
     x = HOV_new((int(target_box[1] * grab_width + grab_x) - pos_center_w))
     y = int(target_box[2] * grab_height + grab_y) - pos_center_h - offset
     abs_x, abs_y = abs(x), abs(y)
+    pid_x = pid.cmd_pid(x, x_dt)
     # 移动补偿
-    if abs_x >= 10:
+    if pid_x >= 10:
         symbol = math.copysign(1, x)
         x_compensate = int((mouses_offset_ratio * x_dt) * symbol)
-        x += x_compensate
-    return x, y, (abs_x <= 4 and abs_y <= 4)
+        pid_x += x_compensate
+    return pid_x, y, (abs_x <= 4 and abs_y <= 5)
 
 
 def get_closest_target_index(box_lists):
@@ -116,7 +121,8 @@ def auto_fire():
     global fire, auto_fire_switch
     mouse_listener()
     while not out_check:
-        time.sleep(random.uniform(0.01))
+        time.sleep(0.01)
+        pid.update_params(kp, ki, 0.01)
         if fire and auto_fire_switch:
             Mouse.mouse.press(1)
             time.sleep(random.uniform(0.04, 0.07))
@@ -126,11 +132,13 @@ def auto_fire():
 
 
 def on_click(x, y, button, pressed):
-    global mouse_left_click, mouse_right_click
+    global mouse_left_click, mouse_right_click, flag_lock_obj_left, flag_lock_obj_right
     if button == mouse.Button.left:
         mouse_left_click = pressed
     elif button == mouse.Button.right:
         mouse_right_click = pressed
+    if (flag_lock_obj_left and not mouse_left_click) or (flag_lock_obj_right and not mouse_right_click):
+        pid.clear()
 
 
 def mouse_listener():
@@ -208,10 +216,9 @@ class MainWindows(QMainWindow):
         self.ui.horizontalSlider_3.valueChanged.connect(self.valueChange_3)
 
         self.ui.horizontalSlider_4.setMinimum(0)
-        self.ui.horizontalSlider_4.setMaximum(0)
+        self.ui.horizontalSlider_4.setMaximum(200)
         self.ui.horizontalSlider_4.setSingleStep(1)
-        self.ui.horizontalSlider_4.setValue(0)
-        self.ui.label_19.setText(str(0))
+        self.ui.label_19.setText(str(kp))
         self.ui.horizontalSlider_4.valueChanged.connect(self.valueChange_4)
 
         self.ui.horizontalSlider_5.setMinimum(0)
@@ -242,7 +249,9 @@ class MainWindows(QMainWindow):
         self.ui.label_14.setText(str(offset_pixel_y))
 
     def valueChange_4(self):
-        self.ui.label_19.setText(str(0))
+        global kp
+        kp = round(self.ui.horizontalSlider_4.value() / 100, 2)
+        self.ui.label_19.setText(str(kp))
 
     def valueChange_5(self):
         global ki
